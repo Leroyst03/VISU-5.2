@@ -21,6 +21,71 @@ function aplicarUnidadPosicion(val) {
   return toCssPx(val);
 }
 
+// --- almacenamiento temporal y colocador de AGVs ---
+const _ultimoPuntoAgv = [];
+
+/**
+ * colocarAgvDesdeBackend(info, container)
+ * Interpreta:
+ *  - info.x  => px desde la izquierda (number) o "NNpx"/"NN%"
+ *  - info.y  => px desde la parte inferior (number) o "NNpx"/"NN%"
+ *  - info.angle => grados
+ *
+ * Si el contenedor aún no tiene altura (clientHeight == 0), usa bottom como fallback.
+ */
+function colocarAgvDesdeBackend(info, container) {
+  const idDom = normalizarAgvId(info.id);
+  let el = document.getElementById(idDom);
+
+  if (!el) {
+    el = document.createElement("img");
+    el.id = idDom;
+    el.className = "agv";
+    el.src = `/static/images/${idDom}.svg`;
+    el.style.position = "absolute";
+    el.style.width = "30px";
+    el.style.height = "30px";
+    // base: centra horizontalmente y sitúa la referencia vertical en la "base"
+    el.style.transformOrigin = "50% 50%";
+    // No fijamos transform aquí: lo aplicaremos tras calcular rotation
+    container.appendChild(el);
+  }
+
+  // LEFT: números -> px; strings con unidad respetadas
+  if (info.x !== undefined && !Number.isNaN(Number(info.x))) {
+    el.style.left = `${Number(info.x)}px`;
+  } else if (typeof info.x === "string") {
+    el.style.left = info.x.trim();
+  }
+
+  // TOP: convertimos y (distance from bottom) a top = containerHeight - y
+  const containerH = container.clientHeight || container.offsetHeight || 0;
+  if (info.y !== undefined && !Number.isNaN(Number(info.y))) {
+    const yNum = Number(info.y);
+    if (containerH > 0) {
+      el.style.top = `${containerH - yNum}px`;
+      el.style.bottom = "";
+    } else {
+      // Si aún no sabemos la altura del contenedor usamos bottom como fallback
+      el.style.bottom = `${yNum}px`;
+      el.style.top = "";
+    }
+  } else if (typeof info.y === "string") {
+    // si viene "30px" o "50%" lo respetamos (se interpreta como top)
+    el.style.top = info.y.trim();
+    el.style.bottom = "";
+  }
+
+  // ROTACION (angle en grados, sin offset porque el SVG apunta a la derecha)
+  const angleDeg = !Number.isNaN(Number(info.angle)) ? Number(info.angle) : 0;
+  // Aplicamos translate para centrar y desplazar verticalmente la referencia de la imagen,
+  // y luego rotate para la orientación en grados.
+  el.style.transform = `translate(-50%, 50%) rotate(${angleDeg}deg)`;
+}
+
+/* --------------------
+   DOMContentLoaded
+   -------------------- */
 document.addEventListener("DOMContentLoaded", function () {
   const botonRuta = document.getElementById("botonRuta");
   const mapaImg = document.getElementById("mapa-img");
@@ -60,7 +125,9 @@ document.addEventListener("DOMContentLoaded", function () {
       el.style.position = "absolute";
       el.style.width = "30px";
       el.style.height = "30px";
-      el.style.transform = "translate(-50%, 50%)"; // base para centrar/pegar por abajo
+      // base para centrar horizontalmente; colocamos la referencia vertical en la base
+      el.style.transform = "translate(-50%, 50%)";
+      el.style.transformOrigin = "50% 50%";
       agvsContainer.appendChild(el);
     }
 
@@ -103,6 +170,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // Inicializar reposición al cargar mapa (convierte bottom->top cuando sea posible)
+  inicializarReposicionMapa();
+
   // Llamadas iniciales
   actualizarOrdenes();
   actualizarAgvs("/api/punto_agv");
@@ -120,10 +190,12 @@ document.addEventListener("DOMContentLoaded", function () {
   setInterval(checkCom, 2000);
 });
 
-/**
- * Actualiza/crea AGVs desde el endpoint /api/punto_agv
- * Acepta: { id: "AGV-1"|"agv-1", x: number|"50%"|"30px", y: number|"50%"|"30px", angle: grados }
- */
+/* --------------------
+   actualizarAgvs
+   - interpreta numeric y como distancia desde bottom (coincidente con crearAgvEnCoordenadas)
+   - guarda última respuesta para reprocesar tras load/resize
+   - respeta el contador: no crea AGVs cuyo índice > contador
+   -------------------- */
 function actualizarAgvs(url) {
   const container = document.getElementById("agvs-container");
   if (!container) return;
@@ -132,42 +204,42 @@ function actualizarAgvs(url) {
   fetch(url)
     .then(res => res.json())
     .then(data => {
+      // Guardar datos para reposicionar cuando el mapa tenga altura conocida
+      _ultimoPuntoAgv.length = 0;
+      Array.prototype.push.apply(_ultimoPuntoAgv, data);
+
       data.forEach(info => {
         const idDom = normalizarAgvId(info.id);
-        let el = document.getElementById(idDom);
+        const index = Number(idDom.split('-')[1]) || 0;
 
-        // Si el contador es 0 no creamos elementos nuevos; sólo actualizamos si ya existen
-        if (!el) {
-          if (maxVisible <= 0) return; // saltar creación
-          // si el contador permite, crear hasta maxVisible
-          const index = Number(idDom.split('-')[1]) || 0;
-          if (index > maxVisible) return;
-          el = document.createElement("img");
-          el.id = idDom;
-          el.className = "agv";
-          el.src = `/static/images/${idDom}.svg`;
-          el.style.position = "absolute";
-          el.style.width = "30px";
-          el.style.height = "30px";
-          el.style.transform = "translate(-50%, 50%)";
-          container.appendChild(el);
+        // Si el contador es 0 no creamos elementos nuevos; sólo actualizamos los ya existentes
+        if (maxVisible <= 0) {
+          const existing = document.getElementById(idDom);
+          if (existing) colocarAgvDesdeBackend(info, container);
+          return;
         }
 
-        // actualizar posición/rotación
-        el.style.left = aplicarUnidadPosicion(info.x ?? info.left);
-        el.style.top  = aplicarUnidadPosicion(info.y ?? info.top);
-        const angleDeg = Number(info.angle ?? info.A ?? 0) || 0;
-        el.style.transform = `translate(-50%, 50%) rotate(${angleDeg}deg)`;
+        // Si el índice del AGV excede el contador, no lo mostramos/creamos
+        if (index > maxVisible) {
+          // si existe en DOM, ocultarlo
+          const existing = document.getElementById(idDom);
+          if (existing) existing.style.display = "none";
+          return;
+        }
+
+        // Mostrar/crear y posicionar
+        colocarAgvDesdeBackend(info, container);
+        // asegurar visible si se había ocultado
+        const el = document.getElementById(idDom);
+        if (el) el.style.display = "";
       });
     })
     .catch(err => console.error("Error al actualizar AGVs:", err));
 }
 
-
-/**
- * Actualiza/crea semáforos desde el endpoint /api/punto_semaforo
- * Acepta: { id:"semaforo-1", left:number|string, top:number|string, color:0|1|null }
- */
+/* --------------------
+   Semáforos (mantengo la lógica: left/top num => px; string con %/px respetado)
+   -------------------- */
 function actualizarSemaforos(url) {
   const container = document.getElementById("agvs-container");
   if (!container) return;
@@ -191,8 +263,11 @@ function actualizarSemaforos(url) {
         }
 
         // Posición: número -> px, string con %/px -> respetar
-        el.style.left = aplicarUnidadPosicion(info.left);
-        el.style.top  = aplicarUnidadPosicion(info.top);
+        if (info.left !== undefined && !Number.isNaN(Number(info.left))) el.style.left = `${Number(info.left)}px`;
+        else if (typeof info.left === "string") el.style.left = info.left.trim();
+
+        if (info.top !== undefined && !Number.isNaN(Number(info.top))) el.style.top = `${Number(info.top)}px`;
+        else if (typeof info.top === "string") el.style.top = info.top.trim();
 
         // Imagen por estado (1=verde, 0=rojo, otro=gris)
         if (info.color === 1) {
@@ -207,34 +282,58 @@ function actualizarSemaforos(url) {
     .catch(err => console.error("Error al actualizar semáforos:", err));
 }
 
-// --- resto de funciones de UI (comunicaciones, órdenes, bits) ---
+/* --------------------
+   Reposicionar AGVs cuando el mapa cargue o cambie de tamaño
+   Convierte elementos colocados por fallback (bottom) a top correcto
+   -------------------- */
+function inicializarReposicionMapa() {
+  const mapaImg = document.getElementById("mapa-img");
+  const container = document.getElementById("agvs-container");
+  if (!mapaImg || !container) return;
+
+  function reprocesar() {
+    if (_ultimoPuntoAgv.length === 0) return;
+    _ultimoPuntoAgv.forEach(info => colocarAgvDesdeBackend(info, container));
+  }
+
+  if (mapaImg.complete) reprocesar();
+  mapaImg.addEventListener("load", reprocesar);
+  window.addEventListener("resize", () => setTimeout(reprocesar, 80));
+}
+
+/* --------------------
+   Resto de funciones (se mantienen sin cambios)
+   actualizarComunicaciones, actualizarOrdenes, checkCom, actualizarEntradas,
+   actualizarSalidas, actualizarMensaje
+   -------------------- */
+
 function actualizarComunicaciones() {
   fetch("/api/estado_comunicaciones", { cache: "no-store" })
     .then(res => res.json())
     .then(data => {
       const plc = document.getElementById("plc-status");
       if (plc) {
-            plc.src = data.plc === 1
-            ? "/static/images/punto-verde.png"
-            : "/static/images/punto-rojo.png";
-        }
+        plc.src = data.plc === 1
+          ? "/static/images/punto-verde.png"
+          : "/static/images/punto-rojo.png";
+      }
 
       const container = document.getElementById("estado-agvs");
-        if (container) {
-            container.innerHTML = "";
-            data.agvs.forEach((agv) => {
-            const etiqueta = document.createElement("span");
-            etiqueta.className = "etiqueta";
-            etiqueta.textContent = `${agv.id}:`;
+      if (container) {
+        container.innerHTML = "";
+        data.agvs.forEach((agv) => {
+          const etiqueta = document.createElement("span");
+          etiqueta.className = "etiqueta";
+          etiqueta.textContent = `${agv.id}:`;
 
-            const imagen = document.createElement("img");
-            imagen.className = "entrada-bit";
-            imagen.src = agv.status === 1
-                ? "/static/images/punto-verde.png"
-                : "/static/images/punto-rojo.png";
+          const imagen = document.createElement("img");
+          imagen.className = "entrada-bit";
+          imagen.src = agv.status === 1
+            ? "/static/images/punto-verde.png"
+            : "/static/images/punto-rojo.png";
 
-            container.appendChild(etiqueta);
-            container.appendChild(imagen);
+          container.appendChild(etiqueta);
+          container.appendChild(imagen);
         });
       }
     })
@@ -242,104 +341,104 @@ function actualizarComunicaciones() {
 }
 
 function actualizarOrdenes() {
-    fetch("/api/ordenes")
-        .then(res => res.json())
-        .then(ordenes => {
-        const tbody = document.getElementById("ordenes-container");
-        if (!tbody) return;
+  fetch("/api/ordenes")
+    .then(res => res.json())
+    .then(ordenes => {
+      const tbody = document.getElementById("ordenes-container");
+      if (!tbody) return;
 
-        tbody.innerHTML = "";
-        if (ordenes.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3">No hay órdenes registradas.</td></tr>`;
-            return;
-        }
+      tbody.innerHTML = "";
+      if (ordenes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3">No hay órdenes registradas.</td></tr>`;
+        return;
+      }
 
-        ordenes.forEach(o => {
-            tbody.innerHTML += `
-            <tr>
-                <th scope="row">${o.id}</th>
-                <td>${o.origen}</td>
-                <td>${o.destino}</td>
-            </tr>
-            `;
-        });
-        })
+      ordenes.forEach(o => {
+        tbody.innerHTML += `
+          <tr>
+            <th scope="row">${o.id}</th>
+            <td>${o.origen}</td>
+            <td>${o.destino}</td>
+          </tr>
+        `;
+      });
+    })
     .catch(err => console.error("Error al buscar órdenes:", err));
 }
 
 function checkCom() {
-    fetch("/api/com")
-        .then(res => res.json())
-        .then(data => {
-        const com = data.COM;
+  fetch("/api/com")
+    .then(res => res.json())
+    .then(data => {
+      const com = data.COM;
 
-        if (com === 1) {
-            actualizarEntradas();
-            actualizarSalidas();
-        } else {
-            fetch("/api/inputs")
-                .then(res => res.json())
-                .then(bits => {
-                    bits.forEach((bit, index) => {
-                        const img = document.querySelector(`.entrada-bit[data-entrada="${index}"]`);
-                        if (img) {
-                            img.src = "/static/images/punto-gris.png";
-                        }
-                    });
-                })
-            .catch(err => console.error("Error al forzar las entradas:", err));
-
-                document.querySelectorAll(".salida-bit").forEach(img => {
+      if (com === 1) {
+        actualizarEntradas();
+        actualizarSalidas();
+      } else {
+        fetch("/api/inputs")
+          .then(res => res.json())
+          .then(bits => {
+            bits.forEach((bit, index) => {
+              const img = document.querySelector(`.entrada-bit[data-entrada="${index}"]`);
+              if (img) {
                 img.src = "/static/images/punto-gris.png";
+              }
             });
+          })
+          .catch(err => console.error("Error al forzar las entradas:", err));
 
-            const plc = document.getElementById("plc-status");
-            if (plc) plc.src = "/static/images/punto-rojo.png";
-        }
+        document.querySelectorAll(".salida-bit").forEach(img => {
+          img.src = "/static/images/punto-gris.png";
+        });
+
+        const plc = document.getElementById("plc-status");
+        if (plc) plc.src = "/static/images/punto-rojo.png";
+      }
     })
     .catch(err => console.error("Error al verificar COM:", err));
 }
 
 function actualizarEntradas() {
-    fetch("/api/inputs")
-        .then(res => res.json())
-        .then(bits => {
-        bits.forEach((bit, index) => {
-            const img = document.querySelector(`.entrada-bit[data-entrada="${index}"]`);
-            if (img) {
-                img.src = bit === 1
-                    ? "/static/images/punto-verde.png"
-                    : "/static/images/punto-rojo.png";
-            }
-        });
+  fetch("/api/inputs")
+    .then(res => res.json())
+    .then(bits => {
+      bits.forEach((bit, index) => {
+        const img = document.querySelector(`.entrada-bit[data-entrada="${index}"]`);
+        if (img) {
+          img.src = bit === 1
+            ? "/static/images/punto-verde.png"
+            : "/static/images/punto-rojo.png";
+        }
+      });
     })
     .catch(err => console.error("Error al actualizar entradas:", err));
 }
 
 function actualizarSalidas() {
-    fetch("/api/outputs")
-        .then(res => res.json())
-        .then(bits => {
-        bits.forEach((bit, index) => {
-            const img = document.querySelector(`.salida-bit[data-salida="${index}"]`);
-            if (img) {
-            img.src = bit === 1
-                ? "/static/images/punto-verde.png"
-                : "/static/images/punto-rojo.png";
-            }
-        });
-        })
+  fetch("/api/outputs")
+    .then(res => res.json())
+    .then(bits => {
+      bits.forEach((bit, index) => {
+        const img = document.querySelector(`.salida-bit[data-salida="${index}"]`);
+        if (img) {
+          img.src = bit === 1
+            ? "/static/images/punto-verde.png"
+            : "/static/images/punto-rojo.png";
+        }
+      });
+    })
     .catch(err => console.error("Error al actualizar salidas:", err));
 }
 
 function actualizarMensaje() {
-    fetch("/api/mensaje", { cache: "no-store" })
-        .then(res => res.json())
-        .then(data => {
-        const mensajeElemento = document.getElementById("mensaje-dinamico");
-        if (mensajeElemento && data.mensaje !== undefined) {
-            mensajeElemento.textContent = data.mensaje;
-        }
+  fetch("/api/mensaje", { cache: "no-store" })
+    .then(res => res.json())
+    .then(data => {
+      const mensajeElemento = document.getElementById("mensaje-dinamico");
+      if (mensajeElemento && data.mensaje !== undefined) {
+        mensajeElemento.textContent = data.mensaje;
+      }
     })
     .catch(err => console.error("Error al actualizar mensaje:", err));
 }

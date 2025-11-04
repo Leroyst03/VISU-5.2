@@ -53,7 +53,7 @@ class EntryDatabase {
             for (let i = 1; i <= numAgvs; i++) {
                 cols.push(`COM_AGV${i}`, `X_AGV${i}`, `Y_AGV${i}`, `A_AGV${i}`);
                 placeholders.push("?", "?", "?", "?");
-                values.push(0, 30.0, 50.0, 1.0);
+                values.push(0, 80.0, 50.0, 270.0);
             }
 
             cols.push("Inputs", "Outputs", "Mensajes", "Botones_in", "Semaforo");
