@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Panel</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="/scripts/styles.css">
+
+  <!-- Fuente -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="layout-container">
+    <!-- Mapa -->
+    <div class="map-container">
+      <h1 class="titulo-mapa">Mapa</h1>
+      <div class="map">
+        <img id="mapa-img" src="/static/images/mapa.png" alt="Mapa">
+
+        <!-- Contenedores dinámicos -->
+        <div id="semaforos-container"></div>
+        <div id="agvs-container"></div>
+
+        <div style="text-align: center; margin-top: 10px;">
+          <button type="button" id="botonRuta" class="btn btn-info">Ruta</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de órdenes -->
+    <div class="ordenes-container">
+      <h1 class="titulo-ordenes">Órdenes</h1>
+      <table class="table table-bordered border-primary">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Origen</th>
+            <th scope="col">Destino</th>
+          </tr>
+        </thead>
+        <tbody id="ordenes-container">
+          <!-- Se rellena dinámicamente con JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Botones de AGVs -->
+    <div class="agvss-container">
+      <h2 class="titulo-agvs">AGVs</h2>
+      <div class="contador-botones">
+        <button id="botonMenos" class="btn btn-danger">−</button>
+        <span id="contador">0</span>
+        <button id="botonMas" class="btn btn-success">+</button>
+      </div>
+
+      <div class="botones-acciones" id="botones-acciones">
+        <!-- Se pueden generar dinámicamente -->
+      </div>
+    </div>
+
+    <!-- Comunicaciones -->
+    <div class="estado-grid">
+      <div class="estado-col">
+        <h2 class="titulo-seccion">Comunicaciones</h2>
+        <div class="info-contenedor">
+          <p class="punto">
+            <span class="etiqueta">PLC:</span>
+            <img class="entrada-bit" id="plc-status" src="/static/images/punto-rojo.png">
+            <span id="estado-agvs"></span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Entradas -->
+      <div class="estado-col">
+        <h2 class="titulo-seccion">Entradas</h2>
+        <div class="info-contenedor" id="entradas-container">
+          <p class="punto-2">
+            <span class="etiqueta">IN0:</span><img class="entrada-bit" data-entrada="0" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN1:</span><img class="entrada-bit" data-entrada="1" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN2:</span><img class="entrada-bit" data-entrada="2" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN3:</span><img class="entrada-bit" data-entrada="3" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN4:</span><img class="entrada-bit" data-entrada="4" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN5:</span><img class="entrada-bit" data-entrada="5" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN6:</span><img class="entrada-bit" data-entrada="6" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">IN7:</span><img class="entrada-bit" data-entrada="7" src="/static/images/punto-rojo.png">
+          </p>
+        </div>
+      </div>
+
+      <!-- Salidas -->
+      <div class="estado-col">
+        <h2 class="titulo-seccion">Salidas</h2>
+        <div class="info-contenedor" id="salidas-container">
+          <p class="punto-2">
+            <span class="etiqueta">OUT0:</span><img class="salida-bit" data-salida="0" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT1:</span><img class="salida-bit" data-salida="1" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT2:</span><img class="salida-bit" data-salida="2" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT3:</span><img class="salida-bit" data-salida="3" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT4:</span><img class="salida-bit" data-salida="4" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT5:</span><img class="salida-bit" data-salida="5" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT6:</span><img class="salida-bit" data-salida="6" src="/static/images/punto-rojo.png">
+            <span class="etiqueta">OUT7:</span><img class="salida-bit" data-salida="7" src="/static/images/punto-rojo.png">
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div class="estado-mensajes">
+      <div class="linea-mensaje">
+        <h2 class="titulo-seccion">Mensajes del sistema:</h2>
+        <span class="mensaje-texto" id="mensaje-dinamico">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script propio -->
+  <script src="/scripts/script.js"></script>
+</body>
+</html>
