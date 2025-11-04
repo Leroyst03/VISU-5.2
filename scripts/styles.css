@@ -2,42 +2,42 @@
 
 /* Base */
 body {
-    font-family: 'Poppins', sans-serif;
-    background-color: #0D0D0D;
-    color: #FFFFFF;
-    margin: 0;
-    padding: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #0D0D0D;
+  color: #FFFFFF;
+  margin: 0;
+  padding: 0;
 }
 
 /* Layout */
 .layout-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-    flex-wrap: wrap;
-    max-width: 1200px;
-    margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .map-container {
-    flex: 1 1 50%;
-    max-width: 50%;
+  flex: 1 1 50%;
+  max-width: 50%;
 }
 
 .ordenes-container {
-    flex: 1 1 35%;
-    max-width: 35%;
+  flex: 1 1 35%;
+  max-width: 35%;
 }
 
 .agvs-container {
-    flex: 1 1 15%;
-    max-width: 15%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+  flex: 1 1 15%;
+  max-width: 15%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 /* Títulos */
@@ -46,207 +46,210 @@ body {
 .titulo-acciones,
 .titulo-agvs,
 .titulo-seccion {
-    font-size: 22px;
-    font-weight: 600;
-    color: #fff;
-    margin-bottom: 10px;
-    text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 10px;
+  text-align: center;
 }
 
 /* Mapa */
 .map {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 979 / 599;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 979 / 599;
 }
 
 .map img:first-child {
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-    display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
 }
 
-/* Contenedor de AGVs dentro del mapa */
+/* Overlay dentro del mapa para AGVs y semáforos */
 #agvs-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
 }
 
-/* AGVs y semáforos */
-.semaforo,
-.agv {
-    position: absolute;
-    pointer-events: none;
-}
-
+/* AGVs y semáforos (overlay items) */
+.agv,
 .semaforo {
-    width: 10px;
-    transform: translate(-50%, -50%);
+  position: absolute;
+  pointer-events: none;
 }
 
+/* AGV: icono rotable con base de centrado */
 .agv {
-    width: 30px;
-    height: 30px;
-    transform: translate(-50%, 50%); /* centrado en esquina inferior izquierda */
-    transition: transform 0.2s ease-in-out;
-    z-index: 10;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, 50%); /* base; la rotación se agrega en JS */
+  transition: transform 0.2s ease-in-out;
+  z-index: 200;
 }
 
+/* Semáforo: punto coloreado */
+.semaforo {
+  width: 20px;   /* tamaño visible */
+  height: 20px;
+  transform: translate(-50%, -50%);
+  z-index: 300;  /* por encima de AGVs */
+}
+
+/* Botón de ruta sobre el mapa */
 #botonRuta {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    z-index: 10;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 400;
 }
 
 /* Tabla */
 .table {
-    border-color: #1CC9C5;
-    background-color: #1A1A1A;
-    color: #FFFFFF;
+  border-color: #1CC9C5;
+  background-color: #1A1A1A;
+  color: #FFFFFF;
 }
 
 .table thead th {
-    background-color: #6A0DAD;
-    color: #fff;
-    border-color: #6A0DAD;
+  background-color: #6A0DAD;
+  color: #fff;
+  border-color: #6A0DAD;
 }
 
 .table tbody tr:hover {
-    background-color: #222222;
+  background-color: #222222;
 }
 
 /* Contador AGVs */
 .contador-botones {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
 }
 
 #botonMas {
-    background-color: #6A0DAD;
+  background-color: #6A0DAD;
 }
 
 #botonMenos {
-    background-color: #1CC9C5;
+  background-color: #1CC9C5;
 }
 
 #botonMas,
 #botonMenos {
-    padding: 5px 10px;
-    font-size: 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    border: none;
-    color: #fff;
-    transition: background-color 0.3s ease;
+  padding: 5px 10px;
+  font-size: 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  border: none;
+  color: #fff;
+  transition: background-color 0.3s ease;
 }
 
 #botonMas:hover {
-    background-color: #9143da;
-    color: #fff;
+  background-color: #9143da;
+  color: #fff;
 }
 
 #botonMenos:hover {
-    background-color: #36e0dc;
-    color: #000;
+  background-color: #36e0dc;
+  color: #000;
 }
 
 #contador {
-    font-size: 24px;
-    font-weight: bold;
-    min-width: 30px;
-    text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  min-width: 30px;
+  text-align: center;
 }
 
 /* Botones de acción */
 .botones-acciones {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-    margin-top: 15px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-top: 15px;
 }
 
 .boton-accion {
-    width: 100%;
-    height: 40px;
-    padding: 5px;
-    font-size: 13px;
-    border-radius: 5px;
-    background-color: #6A0DAD;
-    color: white;
-    border: none;
-    cursor: pointer;
-    text-align: center;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-family: 'Poppins', sans-serif;
+  width: 100%;
+  height: 40px;
+  padding: 5px;
+  font-size: 13px;
+  border-radius: 5px;
+  background-color: #6A0DAD;
+  color: white;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  font-family: 'Poppins', sans-serif;
 }
 
 .boton-accion:hover {
-    background-color: #1CC9C5;
-    color: #000;
+  background-color: #1CC9C5;
+  color: #000;
 }
 
 /* Estado: Grid de Comunicaciones */
 .estado-col {
-    flex: 1 1 300px;
-    min-width: 250px;
+  flex: 1 1 300px;
+  min-width: 250px;
 }
 
 .estado-grid {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 5px;
-    max-width: 1200px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-width: 1200px;
 }
 
 .punto,
 .punto-2 {
-    margin: 0;
-    font-size: 15px;
-    display: flex;
-    align-items: center;
-    color: #FFFFFF;
-    flex-wrap: wrap;
-    justify-content: center;
+  margin: 0;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  color: #FFFFFF;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .punto img,
 .punto-2 img {
-    margin-left: 4px;
-    margin-right: 8px;
+  margin-left: 4px;
+  margin-right: 8px;
 }
 
 .entrada-bit,
 .salida-bit {
-    width: 16px;
-    height: 16px;
-    object-fit: contain;
-    vertical-align: middle;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  vertical-align: middle;
 }
 
 .linea-mensaje {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    color: #FFFFFF;
-    font-size: 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #FFFFFF;
+  font-size: 16px;
 }
 
 .linea-mensaje .titulo-seccion {
-    margin: 10px;
-    font-size: 18px;
+  margin: 10px;
+  font-size: 18px;
 }
 
 .mensaje-texto {
-    font-weight: normal;
+  font-weight: normal;
 }

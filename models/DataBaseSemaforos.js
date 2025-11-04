@@ -18,7 +18,7 @@ class DataBaseSemaforos {
         CREATE TABLE IF NOT EXISTS semaforos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             X REAL DEFAULT 30.0,
-            Y REAL DEFAULT 18.0
+            Y REAL DEFAULT 15.0
         );`;
         
         this.db.run(sql, (err) => {
@@ -36,7 +36,7 @@ class DataBaseSemaforos {
             if (row && row.count === 0) {
                 this.db.run(
                     "INSERT INTO semaforos (X, Y) VALUES (?, ?)",
-                    [30.0, 18.0],
+                    [30.0, 15.0],
                     (err) => {
                         if (err) console.error("Error al insertar semáforo inicial:", err.message);
                         else console.log("✔ Semáforo inicial insertado.");

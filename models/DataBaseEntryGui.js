@@ -25,7 +25,7 @@ class EntryDatabase {
         ];
 
         for (let i = 1; i <= numAgvs; i++) {
-            columns.push(`COM_AGV${i} INTEGER DEFAULT 1`);
+            columns.push(`COM_AGV${i} INTEGER DEFAULT 0`);
             columns.push(`X_AGV${i} REAL DEFAULT 1.0`);
             columns.push(`Y_AGV${i} REAL DEFAULT 1.0`);
             columns.push(`A_AGV${i} REAL DEFAULT 1.0`);
@@ -53,7 +53,7 @@ class EntryDatabase {
             for (let i = 1; i <= numAgvs; i++) {
                 cols.push(`COM_AGV${i}`, `X_AGV${i}`, `Y_AGV${i}`, `A_AGV${i}`);
                 placeholders.push("?", "?", "?", "?");
-                values.push(1, 1.0, 1.0, 1.0);
+                values.push(0, 30.0, 50.0, 1.0);
             }
 
             cols.push("Inputs", "Outputs", "Mensajes", "Botones_in", "Semaforo");
@@ -111,7 +111,7 @@ class EntryDatabase {
             const posiciones = [];
             for(let i = 1; i <= numAgvs; i++) {
                 posiciones.push({
-                    id: `AGV${i}`,
+                    id: `AGV-${i}`,
                     x: row[`X_AGV${i}`],
                     y: row[`Y_AGV${i}`],
                     angle: row[`A_AGV${i}`]
