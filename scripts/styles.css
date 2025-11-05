@@ -1,255 +1,171 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+/* styles.css - versión corregida para overlay y boton Ruta */
 
-/* Base */
+* { box-sizing: border-box; }
+
 body {
-  font-family: 'Poppins', sans-serif;
-  background-color: #0D0D0D;
-  color: #FFFFFF;
-  margin: 0;
-  padding: 0;
-}
-
-/* Layout */
-.layout-container {
+  background-color: #1a1a1a;
+  color: rgb(200, 200, 200);
+  font-family: 'Poppins', Arial, sans-serif;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: wrap;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex-direction: column;
+  margin: 0;
+  min-height: 100vh;
+  width: 100%;
 }
 
-.map-container {
-  flex: 1 1 50%;
-  max-width: 50%;
-}
-
-.ordenes-container {
-  flex: 1 1 35%;
-  max-width: 35%;
-}
-
-.agvs-container {
-  flex: 1 1 15%;
-  max-width: 15%;
+/* Menú lateral fijo */
+.menu-lateral {
+  width: 90px;
+  height: 100vh;
+  background-color: #323b44;
+  position: fixed;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
+  padding-top: 30px;
+  z-index: 60;
+}
+.menu-lateral img { width: 60px; margin-bottom: 10px; cursor: pointer; }
+.menu-text { color: #fff; font-size: 16px; margin-top: 5px; }
+.menu-lateral a { text-decoration: none; }
+
+/* Contenedor principal */
+.container {
+  display: flex;
+  flex-direction: column;
+  margin-left: 93px; /* espacio para menú lateral */
+  padding: 10px;
+  gap: 15px;
+  z-index: 1;
 }
 
-/* Títulos */
-.titulo-mapa,
-.titulo-ordenes,
-.titulo-acciones,
-.titulo-agvs,
-.titulo-seccion {
-  font-size: 22px;
-  font-weight: 600;
-  color: #fff;
-  margin-bottom: 10px;
-  text-align: center;
+/* Fila superior: mapa + órdenes */
+.section-row { display: flex; justify-content: space-between; gap: 15px; }
+.mapa-agv, .lista-ordenes {
+  flex: 1;
+  background-color: #050505;
+  border-radius: 6px;
+  padding: 10px;
 }
 
-/* Mapa */
-.map {
+/* Map container y overlays */
+.map-container {
   position: relative;
   width: 100%;
-  aspect-ratio: 979 / 599;
-}
-
-.map img:first-child {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
+  height: 450px;
+  overflow: hidden;
+  background: transparent;
   display: block;
 }
 
-/* Overlay dentro del mapa para AGVs y semáforos */
-#agvs-container {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+/* Imagen del mapa */
+#mapa-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 1;
+  pointer-events: auto;
 }
 
-/* AGVs y semáforos (overlay items) */
-.agv,
+/* Botón sobre el mapa (visible y clicable) */
+.boton-mapa, #botonRuta {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(225,216,216,0.95);
+  color: #000;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  z-index: 120;
+  pointer-events: auto;
+}
+
+/* Overlays que contienen AGVs y semáforos */
+#agvs-container,
+#semaforos-container {
+  position: absolute;
+  inset: 0;            /* top:0; right:0; bottom:0; left:0; */
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* no bloquear interacción con la UI */
+  z-index: 20;          /* por encima del mapa */
+}
+
+/* AGV y semáforo (posición y tamaño consistentes) */
+.agv {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, 50%);
+  transform-origin: 50% 50%;
+  z-index: 30;
+  pointer-events: auto; /* si quieres interactuar con el AGV */
+}
+
 .semaforo {
   position: absolute;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  z-index: 31;
   pointer-events: none;
 }
 
-/* AGV: icono rotable con base de centrado */
-.agv {
-  width: 30px;
-  height: 30px;
-  transform: translate(-50%, 50%); /* base; la rotación se agrega en JS */
-  transition: transform 0.2s ease-in-out;
-  z-index: 200;
-}
+/* Tabla de órdenes */
+.tabla-contenedor { max-height: 300px; overflow-y: auto; }
+.content-table { width: 100%; border-collapse: collapse; }
+.content-table th, .content-table td { border: 1px solid #444; padding: 6px; }
+.content-table th { background-color: #3584e4; color: white; }
 
-/* Semáforo: punto coloreado */
-.semaforo {
-  width: 20px;   /* tamaño visible */
-  height: 20px;
-  transform: translate(-50%, -50%);
-  z-index: 300;  /* por encima de AGVs */
+/* Acciones y botones */
+#container-botones { background-color: #050505; border-radius: 6px; padding: 10px; }
+#titulo-acciones { font-size: 24px; text-align: center; margin-bottom: 10px; }
+.section-acciones { display: flex; justify-content: space-between; gap: 20px; }
+.contador { display: flex; flex-direction: column; align-items: center; }
+.contador-button {
+  width: 50px; height: 50px; font-size: 22px; font-weight: bold;
+  background-color: #3584e4; color: white; border: none; border-radius: 6px;
+  margin: 5px; cursor: pointer;
 }
-
-/* Botón de ruta sobre el mapa */
-#botonRuta {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  z-index: 400;
+.contador-button:hover { background-color: #0a65d4; }
+.contador-input {
+  width: 50px; text-align: center; font-size: 18px; margin-top: 5px;
+  background:#0b0b0b; color:#fff; border:1px solid #333; border-radius:4px; padding:4px;
 }
-
-/* Tabla */
-.table {
-  border-color: #1CC9C5;
-  background-color: #1A1A1A;
-  color: #FFFFFF;
-}
-
-.table thead th {
-  background-color: #6A0DAD;
-  color: #fff;
-  border-color: #6A0DAD;
-}
-
-.table tbody tr:hover {
-  background-color: #222222;
-}
-
-/* Contador AGVs */
-.contador-botones {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: center;
-}
-
-#botonMas {
-  background-color: #6A0DAD;
-}
-
-#botonMenos {
-  background-color: #1CC9C5;
-}
-
-#botonMas,
-#botonMenos {
-  padding: 5px 10px;
-  font-size: 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  border: none;
-  color: #fff;
-  transition: background-color 0.3s ease;
-}
-
-#botonMas:hover {
-  background-color: #9143da;
-  color: #fff;
-}
-
-#botonMenos:hover {
-  background-color: #36e0dc;
-  color: #000;
-}
-
-#contador {
-  font-size: 24px;
-  font-weight: bold;
-  min-width: 30px;
-  text-align: center;
-}
-
-/* Botones de acción */
-.botones-acciones {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  width: 100%;
-  margin-top: 15px;
-}
-
+.botones { display: flex; flex-wrap: wrap; gap: 10px; }
 .boton-accion {
-  width: 100%;
-  height: 40px;
-  padding: 5px;
-  font-size: 13px;
-  border-radius: 5px;
-  background-color: #6A0DAD;
-  color: white;
-  border: none;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  font-family: 'Poppins', sans-serif;
+  height: 70px; width: 100px; background-color: #3584e4; color: white;
+  border: none; border-radius: 10px; font-size: 14px; cursor: pointer;
 }
+.boton-accion:hover { background-color: #0a65d4; font-weight: bold; }
 
-.boton-accion:hover {
-  background-color: #1CC9C5;
-  color: #000;
-}
+/* Comunicaciones, entradas y salidas */
+.com-entradas-salidas { display: flex; gap: 15px; }
+.section { flex: 1; background-color: #050505; border-radius: 6px; padding: 10px; }
 
-/* Estado: Grid de Comunicaciones */
-.estado-col {
-  flex: 1 1 300px;
-  min-width: 250px;
-}
+/* LEDs en cuadrícula */
+.led-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; justify-items: center; }
+.led-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: #fff; }
 
-.estado-grid {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 5px;
-  max-width: 1200px;
-}
+/* LEDs como DIV */
+.led { width: 18px; height: 18px; border-radius: 50%; display: inline-block; margin-top: 2px; border: 1px solid #333; }
+.led-verde { background-color: #00c853; box-shadow: 0 0 18px #00c853; }
+.led-rojo  { background-color: #d50000; box-shadow: 0 0 18px #d50000; }
+.led-gris  { background-color: #757575; box-shadow: 0 0 18px #555; }
 
-.punto,
-.punto-2 {
-  margin: 0;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  color: #FFFFFF;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+/* LEDs como IMG */
+.entrada-bit, .salida-bit { width: 18px; height: 18px; object-fit: contain; vertical-align: middle; margin: 2px; }
 
-.punto img,
-.punto-2 img {
-  margin-left: 4px;
-  margin-right: 8px;
-}
+/* Mensajes */
+.mensajes-sistema { background-color: #050505; border-radius: 6px; padding: 10px; min-height: 100px; color: #ddd; }
 
-.entrada-bit,
-.salida-bit {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  vertical-align: middle;
-}
-
-.linea-mensaje {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: #FFFFFF;
-  font-size: 16px;
-}
-
-.linea-mensaje .titulo-seccion {
-  margin: 10px;
-  font-size: 18px;
-}
-
-.mensaje-texto {
-  font-weight: normal;
+/* Responsivo básico */
+@media (max-width: 900px) {
+  .section-row { flex-direction: column; }
+  .map-container { height: 320px; }
 }

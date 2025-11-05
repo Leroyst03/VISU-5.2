@@ -15,13 +15,13 @@ class EntryDatabase {
     // Crear tabla entry_gui con columnas dinámicas
     initEntryGui(numAgvs = (process.env.AGVS || 5)) {
         const columns = [
-        "id INTEGER PRIMARY KEY AUTOINCREMENT",
-        "COM INTEGER DEFAULT 1",
-        "Inputs INTEGER DEFAULT 2",
-        "Outputs INTEGER DEFAULT 3",
-        "Mensajes TEXT DEFAULT 'Mensaje de ejemplo'",
-        "Botones_in INTEGER DEFAULT 0",
-        "Semaforo INTEGER DEFAULT 8"
+            "id INTEGER PRIMARY KEY AUTOINCREMENT",
+            "COM INTEGER DEFAULT 1",
+            "Inputs INTEGER DEFAULT 0",
+            "Outputs INTEGER DEFAULT 3",
+            "Mensajes TEXT DEFAULT 'Mensaje de ejemplo'",
+            "Botones_in INTEGER DEFAULT 0",
+            "Semaforo INTEGER DEFAULT 8"
         ];
 
         for (let i = 1; i <= numAgvs; i++) {
@@ -53,12 +53,12 @@ class EntryDatabase {
             for (let i = 1; i <= numAgvs; i++) {
                 cols.push(`COM_AGV${i}`, `X_AGV${i}`, `Y_AGV${i}`, `A_AGV${i}`);
                 placeholders.push("?", "?", "?", "?");
-                values.push(0, 80.0, 50.0, 270.0);
+                values.push(0, 80.0, 150.0, 270.0);
             }
 
             cols.push("Inputs", "Outputs", "Mensajes", "Botones_in", "Semaforo");
             placeholders.push("?", "?", "?", "?", "?");
-            values.push(2, 3, "Prueba", 0, 8);
+            values.push(0, 3, "Prueba", 0, 8);
 
             const sql = `INSERT INTO entry_gui (${cols.join(", ")}) VALUES (${placeholders.join(", ")});`;
 

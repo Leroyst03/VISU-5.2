@@ -22,13 +22,12 @@ class Conversiones {
         // Devolver coordenadas en formato CSS
         return { left: `${left_pct.toFixed(2)}%`, top: `${top_pct.toFixed(2)}%` };
     }
-
-    // Convierte un número entero en un array de bits (LSB primero)
     numeroParaBits(valor, numBits = 8) {
-        // Pasar a binario y rellenar con ceros a la izquierda
-        const binario = valor.toString(2).padStart(numBits, "0");
-        // Separar en caracteres, invertir orden y convertir a enteros
-        return binario.split("").reverse().map((b) => parseInt(b));
+        const bits = [];
+        for (let i = 0; i < numBits; i++) {
+            bits.push((valor >> i) & 1); // extrae el i-ésimo bit
+        }
+        return bits;
     }
 
     // Obtiene los bits del campo "Inputs" de una fila de entry_gui

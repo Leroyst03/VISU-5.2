@@ -1,43 +1,48 @@
+// script.js - versión corregida
+
 // Helpers
 function normalizarAgvId(id) {
   return String(id).trim().toLowerCase();
 }
 
 function toCssPx(val) {
-  // Si viene número -> lo tratamos como px
   if (typeof val === "number") return `${val}px`;
-  // Si viene string con unidad (%) o (px) o similar -> respetamos
   if (typeof val === "string") {
     const s = val.trim();
     if (s.endsWith("%") || s.endsWith("px")) return s;
-    if (!isNaN(Number(s))) return `${s}px`; // "30" -> "30px"
+    if (!isNaN(Number(s))) return `${s}px`;
   }
   return val;
 }
 
 function aplicarUnidadPosicion(val) {
-  // Compatibilidad: si el backend antes devolvía left/top o x/y como porcentaje
-  // y ahora da números en px, preferimos px (toCssPx).
   return toCssPx(val);
 }
 
 // --- almacenamiento temporal y colocador de AGVs ---
 const _ultimoPuntoAgv = [];
+let mostrandoRuta = false; // estado global
 
-/**
- * colocarAgvDesdeBackend(info, container)
- * Interpreta:
- *  - info.x  => px desde la izquierda (number) o "NNpx"/"NN%"
- *  - info.y  => px desde la parte inferior (number) o "NNpx"/"NN%"
- *  - info.angle => grados
- *
- * Si el contenedor aún no tiene altura (clientHeight == 0), usa bottom como fallback.
- */
 function colocarAgvDesdeBackend(info, container) {
+  const contadorInput = document.getElementById("contador-agvs");
+  const maxVisible = parseInt((contadorInput?.value || "0"), 10) || 0;
+
   const idDom = normalizarAgvId(info.id);
+  // extrae número si está presente
+  const m = idDom.match(/(\d+)/);
+  const index = m ? Number(m[1]) : NaN;
+
   let el = document.getElementById(idDom);
 
+  // Si no existe y el contador no permite crear, no crear
+  if (!el && maxVisible <= 0) {
+    return; // solo actualizamos elementos existentes cuando contador = 0
+  }
+
+  // Si no existe y hay contador > 0, validar índice antes de crear
   if (!el) {
+    if (!Number.isNaN(index) && index > maxVisible) return; // no crear si excede
+    // crear
     el = document.createElement("img");
     el.id = idDom;
     el.className = "agv";
@@ -45,20 +50,17 @@ function colocarAgvDesdeBackend(info, container) {
     el.style.position = "absolute";
     el.style.width = "30px";
     el.style.height = "30px";
-    // base: centra horizontalmente y sitúa la referencia vertical en la "base"
     el.style.transformOrigin = "50% 50%";
-    // No fijamos transform aquí: lo aplicaremos tras calcular rotation
     container.appendChild(el);
   }
 
-  // LEFT: números -> px; strings con unidad respetadas
+  // Aplicar posiciones y rotación (robusto)
   if (info.x !== undefined && !Number.isNaN(Number(info.x))) {
     el.style.left = `${Number(info.x)}px`;
-  } else if (typeof info.x === "string") {
+  } else if (typeof info.x === "string" && info.x.trim() !== "") {
     el.style.left = info.x.trim();
   }
 
-  // TOP: convertimos y (distance from bottom) a top = containerHeight - y
   const containerH = container.clientHeight || container.offsetHeight || 0;
   if (info.y !== undefined && !Number.isNaN(Number(info.y))) {
     const yNum = Number(info.y);
@@ -66,53 +68,88 @@ function colocarAgvDesdeBackend(info, container) {
       el.style.top = `${containerH - yNum}px`;
       el.style.bottom = "";
     } else {
-      // Si aún no sabemos la altura del contenedor usamos bottom como fallback
       el.style.bottom = `${yNum}px`;
       el.style.top = "";
     }
-  } else if (typeof info.y === "string") {
-    // si viene "30px" o "50%" lo respetamos (se interpreta como top)
+  } else if (typeof info.y === "string" && info.y.trim() !== "") {
     el.style.top = info.y.trim();
     el.style.bottom = "";
   }
 
-  // ROTACION (angle en grados, sin offset porque el SVG apunta a la derecha)
   const angleDeg = !Number.isNaN(Number(info.angle)) ? Number(info.angle) : 0;
-  // Aplicamos translate para centrar y desplazar verticalmente la referencia de la imagen,
-  // y luego rotate para la orientación en grados.
   el.style.transform = `translate(-50%, 50%) rotate(${angleDeg}deg)`;
+  el.style.display = "";
 }
 
+
 /* --------------------
-   DOMContentLoaded
+   DOMContentLoaded - ÚNICO y centralizado
    -------------------- */
 document.addEventListener("DOMContentLoaded", function () {
+  const socket = (typeof io === "function") ? io() : null;
+  const botonesContainer = document.getElementById("botones-acciones");
+
+  // crear botones dinámicos si existe el contenedor
+  if (botonesContainer) {
+    const NUM_BOTONES = 8;
+    for (let i = 0; i < NUM_BOTONES; i++) {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-primary m-1";
+      btn.textContent = `Botón ${i}`;
+      btn.dataset.index = i;
+      btn.addEventListener("click", () => {
+        if (socket) socket.emit("boton_pulsado", { index: i });
+      });
+      botonesContainer.appendChild(btn);
+    }
+  }
+
+  if (socket) {
+    socket.on("update_led_color_outputs", (colores) => {
+      colores.forEach((color, i) => {
+        const led = document.querySelector(`.salida-bit[data-salida="${i}"]`);
+        if (led) led.src = `/static/images/punto-${color}.png`;
+      });
+    });
+  }
+
+  // referencias DOM principales
   const botonRuta = document.getElementById("botonRuta");
   const mapaImg = document.getElementById("mapa-img");
   const botonMas = document.getElementById("botonMas");
   const botonMenos = document.getElementById("botonMenos");
-  const contador = document.getElementById("contador");
+  const contadorInput = document.getElementById("contador-agvs");
   const agvsContainer = document.getElementById("agvs-container");
 
-  if (!botonRuta || !mapaImg || !botonMas || !botonMenos || !contador || !agvsContainer) {
-    console.error("Elemento no encontrado");
+  if (!mapaImg || !agvsContainer) {
+    console.error("mapa-img o agvs-container no encontrados");
     return;
   }
 
-  let mostrandoRuta = false;
-  let valorContador = parseInt(contador.textContent.trim()) || 0;
+  // contador inicial (si falta el input, trabajamos con 0 localmente)
+  let valorContador = contadorInput ? (parseInt(contadorInput.value.trim()) || 0) : 0;
+  if (contadorInput) contadorInput.value = valorContador;
 
-  // Botón de ruta
-  botonRuta.addEventListener("click", function () {
-    mostrandoRuta = !mostrandoRuta;
-    mapaImg.src = mostrandoRuta ? "/static/images/mapa-ruta.png" : "/static/images/mapa.png";
-  });
+ // Handler del botón Ruta -> solo alterna imagen y clase visual
+  if (botonRuta) {
+    botonRuta.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      mostrandoRuta = !mostrandoRuta;
+      // usar siempre el mismo nodo mapaImg
+      const mapaImg = document.getElementById("mapa-img");
+      if (mapaImg) {
+        mapaImg.src = mostrandoRuta ? "/static/images/mapa-ruta.png" : "/static/images/mapa.png";
+      }
+      const mc = document.querySelector(".map-container");
+      if (mc) mc.classList.toggle("ruta-activa", mostrandoRuta);
+    });
+  }
 
-  // Coordenadas deseadas para nuevo AGV (X desde izquierda en px, Y desde abajo en px)
-  const NUEVO_AGV_X_PX = 30; // 30 px desde la izquierda
-  const NUEVO_AGV_Y_FROM_BOTTOM_PX = 50; // 50 px desde la parte inferior
 
-  // Crear/colocar AGV en coordenadas dadas (xPxFromLeft, yPxFromBottom en números)
+  // creación manual de AGV (cuando se pulse +)
+  const NUEVO_AGV_X_PX = 20;
+  const NUEVO_AGV_Y_FROM_BOTTOM_PX = 115;
+
   function crearAgvEnCoordenadas(index, xPxFromLeft, yPxFromBottom) {
     const idDom = `agv-${index}`;
     let el = document.getElementById(idDom);
@@ -125,55 +162,54 @@ document.addEventListener("DOMContentLoaded", function () {
       el.style.position = "absolute";
       el.style.width = "30px";
       el.style.height = "30px";
-      // base para centrar horizontalmente; colocamos la referencia vertical en la base
       el.style.transform = "translate(-50%, 50%)";
       el.style.transformOrigin = "50% 50%";
       agvsContainer.appendChild(el);
     }
 
-    // Calculamos top en px a partir de la altura del contenedor y la distancia desde bottom
     const containerH = agvsContainer.clientHeight || agvsContainer.offsetHeight || 0;
     const topPx = containerH ? (containerH - yPxFromBottom) : null;
 
     el.style.left = `${xPxFromLeft}px`;
     if (topPx !== null && !Number.isNaN(topPx)) {
       el.style.top = `${topPx}px`;
-      // eliminar bottom si estaba presente como fallback
       el.style.bottom = "";
     } else {
-      // fallback: si no conocemos altura aún, colocamos usando bottom
       el.style.bottom = `${yPxFromBottom}px`;
       el.style.top = "";
     }
+    // actualizar el contador input si existe (ya lo hace el caller, pero aseguramos consistencia)
+    if (contadorInput && `${contadorInput.value}` !== `${valorContador}`) contadorInput.value = valorContador;
   }
 
   // Botón +
-  botonMas.addEventListener("click", function () {
-    if (valorContador < 10) {
-      valorContador++;
-      contador.textContent = valorContador;
-
-      // Crear AGV en X=30px desde izquierda y Y=50px desde bottom
-      crearAgvEnCoordenadas(valorContador, NUEVO_AGV_X_PX, NUEVO_AGV_Y_FROM_BOTTOM_PX);
-    }
-  });
+  if (botonMas) {
+    botonMas.addEventListener("click", function () {
+      if (valorContador < 10) { 
+        valorContador ++;
+        if (contadorInput) contadorInput.value = valorContador;
+        // crear AGV inmediatamente (siempre se muestran)
+        crearAgvEnCoordenadas(valorContador, NUEVO_AGV_X_PX, NUEVO_AGV_Y_FROM_BOTTOM_PX);
+      }
+    });
+  }
 
   // Botón −
-  botonMenos.addEventListener("click", function () {
-    if (valorContador > 0) {
-      const ultimoAgv = document.getElementById(`agv-${valorContador}`);
-      if (ultimoAgv) {
-        agvsContainer.removeChild(ultimoAgv);
+  if (botonMenos) {
+    botonMenos.addEventListener("click", function () {
+      if (valorContador > 0) {
+        const ultimoAgv = document.getElementById(`agv-${valorContador}`);
+        if (ultimoAgv && agvsContainer.contains(ultimoAgv)) {
+          agvsContainer.removeChild(ultimoAgv);
+        }
+        valorContador--;
+        if (contadorInput) contadorInput.value = valorContador;
       }
-      valorContador--;
-      contador.textContent = valorContador;
-    }
-  });
+    });
+  }
 
-  // Inicializar reposición al cargar mapa (convierte bottom->top cuando sea posible)
+  // Inicializaciones: reposición y primeras llamadas
   inicializarReposicionMapa();
-
-  // Llamadas iniciales
   actualizarOrdenes();
   actualizarAgvs("/api/punto_agv");
   actualizarSemaforos("/api/punto_semaforo");
@@ -181,7 +217,7 @@ document.addEventListener("DOMContentLoaded", function () {
   actualizarMensaje();
   checkCom();
 
-  // Intervalos
+  // Intervalos (UNA sola definición)
   setInterval(actualizarOrdenes, 5000);
   setInterval(() => actualizarAgvs("/api/punto_agv"), 5000);
   setInterval(() => actualizarSemaforos("/api/punto_semaforo"), 5000);
@@ -192,44 +228,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
 /* --------------------
    actualizarAgvs
-   - interpreta numeric y como distancia desde bottom (coincidente con crearAgvEnCoordenadas)
-   - guarda última respuesta para reprocesar tras load/resize
-   - respeta el contador: no crea AGVs cuyo índice > contador
+   - siempre actualiza; los AGVs deben mostrarse incluso con "ruta"
    -------------------- */
 function actualizarAgvs(url) {
   const container = document.getElementById("agvs-container");
   if (!container) return;
-  const maxVisible = parseInt(document.getElementById("contador").textContent) || 0;
+
+  const contadorInput = document.getElementById("contador-agvs");
+  const maxVisible = parseInt((contadorInput?.value || "0"), 10) || 0;
 
   fetch(url)
     .then(res => res.json())
     .then(data => {
-      // Guardar datos para reposicionar cuando el mapa tenga altura conocida
+      if (!Array.isArray(data)) return;
       _ultimoPuntoAgv.length = 0;
       Array.prototype.push.apply(_ultimoPuntoAgv, data);
 
       data.forEach(info => {
-        const idDom = normalizarAgvId(info.id);
-        const index = Number(idDom.split('-')[1]) || 0;
+        const idDomRaw = String(info.id || "");
+        const idDom = normalizarAgvId(idDomRaw);
+        const m = idDom.match(/(\d+)/);
+        const index = m ? Number(m[1]) : NaN;
 
-        // Si el contador es 0 no creamos elementos nuevos; sólo actualizamos los ya existentes
+        const existing = document.getElementById(idDom);
+
+        // Si contador = 0, solo actualizar existentes (no creamos nuevos)
         if (maxVisible <= 0) {
-          const existing = document.getElementById(idDom);
-          if (existing) colocarAgvDesdeBackend(info, container);
+          if (existing) {
+            colocarAgvDesdeBackend(info, container);
+            existing.style.display = "";
+          }
           return;
         }
 
-        // Si el índice del AGV excede el contador, no lo mostramos/creamos
-        if (index > maxVisible) {
-          // si existe en DOM, ocultarlo
-          const existing = document.getElementById(idDom);
+        // Si hay contador >0, impide crear si el índice excede maxVisible
+        if (!Number.isNaN(index) && index > maxVisible) {
           if (existing) existing.style.display = "none";
           return;
         }
 
-        // Mostrar/crear y posicionar
+        // crear/reposicionar y asegurar visibilidad
         colocarAgvDesdeBackend(info, container);
-        // asegurar visible si se había ocultado
         const el = document.getElementById(idDom);
         if (el) el.style.display = "";
       });
@@ -237,11 +276,9 @@ function actualizarAgvs(url) {
     .catch(err => console.error("Error al actualizar AGVs:", err));
 }
 
-/* --------------------
-   Semáforos (mantengo la lógica: left/top num => px; string con %/px respetado)
-   -------------------- */
+// --- Actualizar semáforos ---
 function actualizarSemaforos(url) {
-  const container = document.getElementById("agvs-container");
+  const container = document.getElementById("semaforos-container") || document.getElementById("agvs-container");
   if (!container) return;
 
   fetch(url)
@@ -250,42 +287,41 @@ function actualizarSemaforos(url) {
       data.forEach(info => {
         let el = document.getElementById(info.id);
 
+        // Crear si no existe
         if (!el) {
           el = document.createElement("img");
           el.id = info.id;
           el.className = "semaforo";
+          el.src = "/static/images/punto-gris.png";
           el.style.position = "absolute";
-          el.style.width = "20px";
-          el.style.height = "20px";
+          el.style.width = "12px";
+          el.style.height = "12px";
           el.style.transform = "translate(-50%, -50%)";
-          el.src = "/static/images/punto-gris.png"; // default
           container.appendChild(el);
         }
 
-        // Posición: número -> px, string con %/px -> respetar
-        if (info.left !== undefined && !Number.isNaN(Number(info.left))) el.style.left = `${Number(info.left)}px`;
-        else if (typeof info.left === "string") el.style.left = info.left.trim();
-
-        if (info.top !== undefined && !Number.isNaN(Number(info.top))) el.style.top = `${Number(info.top)}px`;
-        else if (typeof info.top === "string") el.style.top = info.top.trim();
-
-        // Imagen por estado (1=verde, 0=rojo, otro=gris)
-        if (info.color === 1) {
-          el.src = "/static/images/punto-verde.png";
-        } else if (info.color === 0) {
-          el.src = "/static/images/punto-rojo.png";
-        } else {
-          el.src = "/static/images/punto-gris.png";
+        // Posición
+        if (info.left !== undefined && !Number.isNaN(Number(info.left))) {
+          el.style.left = `${Number(info.left)}px`;
+        } else if (typeof info.left === "string") {
+          el.style.left = info.left.trim();
         }
+
+        if (info.top !== undefined && !Number.isNaN(Number(info.top))) {
+          el.style.top = `${Number(info.top)}px`;
+        } else if (typeof info.top === "string") {
+          el.style.top = info.top.trim();
+        }
+
+        // Color
+        if (info.color === 1) el.src = "/static/images/punto-verde.png";
+        else if (info.color === 0) el.src = "/static/images/punto-rojo.png";
+        else el.src = "/static/images/punto-gris.png";
       });
     })
     .catch(err => console.error("Error al actualizar semáforos:", err));
 }
 
-/* --------------------
-   Reposicionar AGVs cuando el mapa cargue o cambie de tamaño
-   Convierte elementos colocados por fallback (bottom) a top correcto
-   -------------------- */
 function inicializarReposicionMapa() {
   const mapaImg = document.getElementById("mapa-img");
   const container = document.getElementById("agvs-container");
@@ -293,19 +329,18 @@ function inicializarReposicionMapa() {
 
   function reprocesar() {
     if (_ultimoPuntoAgv.length === 0) return;
-    _ultimoPuntoAgv.forEach(info => colocarAgvDesdeBackend(info, container));
+    const contadorInput = document.getElementById("contador-agvs");
+    const maxVisible = parseInt((contadorInput?.value || "0"), 10) || 0;
+    _ultimoPuntoAgv.forEach(info => {
+      colocarAgvDesdeBackend(info, container);
+    });
   }
+
 
   if (mapaImg.complete) reprocesar();
   mapaImg.addEventListener("load", reprocesar);
   window.addEventListener("resize", () => setTimeout(reprocesar, 80));
 }
-
-/* --------------------
-   Resto de funciones (se mantienen sin cambios)
-   actualizarComunicaciones, actualizarOrdenes, checkCom, actualizarEntradas,
-   actualizarSalidas, actualizarMensaje
-   -------------------- */
 
 function actualizarComunicaciones() {
   fetch("/api/estado_comunicaciones", { cache: "no-store" })
@@ -321,7 +356,7 @@ function actualizarComunicaciones() {
       const container = document.getElementById("estado-agvs");
       if (container) {
         container.innerHTML = "";
-        data.agvs.forEach((agv) => {
+        (data.agvs || []).forEach((agv) => {
           const etiqueta = document.createElement("span");
           etiqueta.className = "etiqueta";
           etiqueta.textContent = `${agv.id}:`;
@@ -348,7 +383,7 @@ function actualizarOrdenes() {
       if (!tbody) return;
 
       tbody.innerHTML = "";
-      if (ordenes.length === 0) {
+      if (!ordenes || ordenes.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3">No hay órdenes registradas.</td></tr>`;
         return;
       }
@@ -381,9 +416,7 @@ function checkCom() {
           .then(bits => {
             bits.forEach((bit, index) => {
               const img = document.querySelector(`.entrada-bit[data-entrada="${index}"]`);
-              if (img) {
-                img.src = "/static/images/punto-gris.png";
-              }
+              if (img) img.src = "/static/images/punto-gris.png";
             });
           })
           .catch(err => console.error("Error al forzar las entradas:", err));
@@ -416,7 +449,7 @@ function actualizarEntradas() {
 }
 
 function actualizarSalidas() {
-  fetch("/api/outputs")
+  fetch("/api/botones")
     .then(res => res.json())
     .then(bits => {
       bits.forEach((bit, index) => {
