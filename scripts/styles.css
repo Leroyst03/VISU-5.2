@@ -96,16 +96,21 @@ body {
   z-index: 20;          /* por encima del mapa */
 }
 
-/* AGV y semáforo (posición y tamaño consistentes) */
+/* Suavizar rotación y optimizar composición */
 .agv {
   position: absolute;
   width: 30px;
   height: 30px;
-  transform: translate(-50%, 50%);
+  transform: translate(-50%, 50%) rotate(0deg);
   transform-origin: 50% 50%;
-  z-index: 30;
-  pointer-events: auto; /* si quieres interactuar con el AGV */
+  transition: transform 300ms cubic-bezier(.2,.8,.2,1);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* opcional: mejorar nitidez en pantallas con transform */
+  image-rendering: auto;
 }
+
 
 .semaforo {
   position: absolute;
@@ -168,4 +173,8 @@ body {
 @media (max-width: 900px) {
   .section-row { flex-direction: column; }
   .map-container { height: 320px; }
+}
+
+html {
+  scroll-behavior: smooth;
 }

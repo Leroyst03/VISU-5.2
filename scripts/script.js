@@ -130,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let valorContador = contadorInput ? (parseInt(contadorInput.value.trim()) || 0) : 0;
   if (contadorInput) contadorInput.value = valorContador;
 
- // Handler del botón Ruta -> solo alterna imagen y clase visual
+ // Handler del botón Ruta -> alterna imagen y clase visual
   if (botonRuta) {
     botonRuta.addEventListener("click", function (ev) {
       ev.stopPropagation();
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", function () {
       el.style.bottom = `${yPxFromBottom}px`;
       el.style.top = "";
     }
-    // actualizar el contador input si existe (ya lo hace el caller, pero aseguramos consistencia)
+    // actualizar el contador input si existe 
     if (contadorInput && `${contadorInput.value}` !== `${valorContador}`) contadorInput.value = valorContador;
   }
 
@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (valorContador < 10) { 
         valorContador ++;
         if (contadorInput) contadorInput.value = valorContador;
-        // crear AGV inmediatamente (siempre se muestran)
+        // crear AGV inmediatamente
         crearAgvEnCoordenadas(valorContador, NUEVO_AGV_X_PX, NUEVO_AGV_Y_FROM_BOTTOM_PX);
       }
     });
@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", function () {
   actualizarMensaje();
   checkCom();
 
-  // Intervalos (UNA sola definición)
+  // Intervalos
   setInterval(actualizarOrdenes, 5000);
   setInterval(() => actualizarAgvs("/api/punto_agv"), 5000);
   setInterval(() => actualizarSemaforos("/api/punto_semaforo"), 5000);
@@ -228,7 +228,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 /* --------------------
    actualizarAgvs
-   - siempre actualiza; los AGVs deben mostrarse incluso con "ruta"
    -------------------- */
 function actualizarAgvs(url) {
   const container = document.getElementById("agvs-container");
