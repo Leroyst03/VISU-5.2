@@ -17,14 +17,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
     botonesContainer.appendChild(btn);
   }
-
-  // Escuchar actualizaciones de LEDs
-  socket.on("update_led_color_outputs", (colores) => {
-    colores.forEach((color, i) => {
-      const led = document.querySelector(`.salida-bit[data-salida="${i}"]`);
-      if (led) {
-        led.src = `/static/images/punto-${color}.png`;
-      }
-    });
-  });
 });

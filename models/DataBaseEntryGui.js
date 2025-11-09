@@ -17,11 +17,11 @@ class EntryDatabase {
         const columns = [
             "id INTEGER PRIMARY KEY AUTOINCREMENT",
             "COM INTEGER DEFAULT 1",
-            "Inputs INTEGER DEFAULT 0",
+            "Inputs INTEGER DEFAULT 1",
             "Outputs INTEGER DEFAULT 3",
             "Mensajes TEXT DEFAULT 'Mensaje de ejemplo'",
             "Botones_in INTEGER DEFAULT 0",
-            "Semaforo INTEGER DEFAULT 8"
+            "Semaforo INTEGER DEFAULT 1"
         ];
 
         for (let i = 1; i <= numAgvs; i++) {
@@ -58,7 +58,7 @@ class EntryDatabase {
 
             cols.push("Inputs", "Outputs", "Mensajes", "Botones_in", "Semaforo");
             placeholders.push("?", "?", "?", "?", "?");
-            values.push(0, 3, "Prueba", 0, 8);
+            values.push(1, 3, "Prueba", 0, 1);
 
             const sql = `INSERT INTO entry_gui (${cols.join(", ")}) VALUES (${placeholders.join(", ")});`;
 

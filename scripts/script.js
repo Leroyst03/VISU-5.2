@@ -448,7 +448,7 @@ function actualizarEntradas() {
 }
 
 function actualizarSalidas() {
-  fetch("/api/botones")
+  fetch("/api/outputs")
     .then(res => res.json())
     .then(bits => {
       bits.forEach((bit, index) => {
@@ -462,6 +462,7 @@ function actualizarSalidas() {
     })
     .catch(err => console.error("Error al actualizar salidas:", err));
 }
+
 
 function actualizarMensaje() {
   fetch("/api/mensaje", { cache: "no-store" })

@@ -34,14 +34,29 @@ class DataBaseSemaforos {
     insertDefaultRow() {
         this.db.get("SELECT COUNT(*) as count FROM semaforos", (err, row) => {
             if (row && row.count === 0) {
-                this.db.run(
-                    "INSERT INTO semaforos (X, Y) VALUES (?, ?)",
-                    [30.0, 15.0],
-                    (err) => {
-                        if (err) console.error("Error al insertar semáforo inicial:", err.message);
-                        else console.log("✔ Semáforo inicial insertado.");
+                const posiciones = [
+                    {x: 30.0, y: 15.0},
+                    {x: 30.0, y: 18.0},
+                    {x: 30.0, y: 24.0}
+                ];
+                
+                const orden = this.db.prepare("INSERT INTO semaforos (X, Y) VALUES (?, ?)");
+
+                posiciones.forEach(i => {
+                    orden.run([i.x, i.y], err => {
+                        if (err) {
+                            console.error("Error al insertar semaforo: ", err.message);
+                        }
+                    });
+                });
+               
+                orden.finalize((err2) => {
+                    if (err2) {
+                        console.error("Error finalizando inserciones: ", err2.message);
                     }
-                );
+                    else console.log("✔ Semáforos iniciales insertados.");
+                });
+
             }
         });
     }

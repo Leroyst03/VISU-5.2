@@ -42,8 +42,7 @@ app.get("/", (req, res) => {
 });
 
 // Enganchar controladores de sockets
-require("./controllers/ioSocketController")(io);   // para entradas/salidas en tiempo real
-require("./controllers/botonesController")(io);   //  para botones/LEDs en tiempo real
+require("./controllers/botonesController")(io);   //  para botones_out en tiempo real
 
 // Arrancar servidor
 server.listen(port, () => {
