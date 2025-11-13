@@ -1,8 +1,10 @@
 const sqlite3 = require('sqlite3').verbose();
+const EntryDatabase = require('./DataBaseEntryGui');
 
 class DataBaseOutGui {
   constructor(rutaDb = "./dataBaseOutGui.db") {
     console.log("Conectando a DB OutGui en:", rutaDb);
+
     this.db = new sqlite3.Database(rutaDb, (err) => {
       if (err) {
         console.error("❌ Error al conectar con la base de datos:", err.message);
@@ -10,6 +12,28 @@ class DataBaseOutGui {
         console.log("✅ Conectado a la base de datos OutGui.");
       }
     });
+
+    this.entryDb = new EntryDatabase();
+
+    // Se resetea automáticamente cada 500 ms, pero solo si botones_in > 0
+    setInterval(() => {
+      this.entryDb.getBotonesIn((err, botonesIn) => {
+        if (err) {
+          console.error("Error leyendo botones_in:", err.message);
+          return;
+        }
+
+        if (botonesIn > 0) {
+          this.resetBotonesOut((err) => {
+            if (err) {
+              console.error("Error en reset periódico:", err.message);
+            } else {
+              console.log("Botones_out reseteados automáticamente 0.");
+            }
+          });
+        }
+      });
+    }, 500);
   }
 
   // Crear tabla out_gui
@@ -49,40 +73,6 @@ class DataBaseOutGui {
     });
   }
 
-  // Actualizar numero_agvs
-  updateNumeroAgvs(nuevoValor, id = 1, cb = () => {}) {
-    this.db.run(
-      "UPDATE out_gui SET numero_agvs = ? WHERE id = ?",
-      [nuevoValor, id],
-      function (err) {
-        if (err) {
-          console.error("Error al actualizar numero_agvs:", err.message);
-          return cb(err);
-        }
-        console.log(`✔ numero_agvs actualizado (${this.changes} fila)`);
-        if (this.changes === 0) return cb(new Error("No rows updated (id=1 missing?)"));
-        cb(null, this.changes);
-      }
-    );
-  }
-
-  // Actualizar botones_out (no recomendado para operaciones concurrentes)
-  updateBotonesOut(nuevoValor, id = 1, cb = () => {}) {
-    this.db.run(
-      "UPDATE out_gui SET botones_out = ? WHERE id = ?",
-      [nuevoValor, id],
-      function (err) {
-        if (err) {
-          console.error("Error al actualizar botones_out:", err.message);
-          return cb(err);
-        }
-        console.log(`✔ botones_out actualizado (${this.changes} fila)`);
-        if (this.changes === 0) return cb(new Error("No rows updated (id=1 missing?)"));
-        cb(null, this.changes);
-      }
-    );
-  }
-
   // Leer numero_agvs
   getNumeroAgvs(cb) {
     this.db.get("SELECT numero_agvs FROM out_gui WHERE id = 1", [], (err, row) => {
@@ -94,7 +84,7 @@ class DataBaseOutGui {
     });
   }
 
-  // Leer botones_out (corregido)
+  // Leer botones_out
   getOutBotones(cb) {
     this.db.get("SELECT botones_out FROM out_gui WHERE id = 1", [], (err, row) => {
       if (err) {
@@ -106,48 +96,35 @@ class DataBaseOutGui {
     });
   }
 
-  // Operación atómica: OR bitwise para encender bits sin duplicados
-  atomicOrBotonesOut(mask, exponente, cb) {
-    const exponentes = new Set();
-   
-    // Si el exponente x ya lo hemos sumado no aplicamos ninguna operacion, de lo contrario lo registramos en el set
-    if (exponentes.has(exponente)) {
-      return ; 
-      
-    }
-
-    exponentes.add(exponente);
- 
+  // Operación atómica: OR bitwise
+  atomicOrBotonesOut(mask, cb) {
     const sql = "UPDATE out_gui SET botones_out = COALESCE(botones_out,0) | ? WHERE id = 1";
     this.db.run(sql, [mask], function (err) {
       if (err) {
         console.error("Error atomicOrBotonesOut UPDATE:", err.message);
         return cb(err);
       }
-
       if (this.changes === 0) return cb(new Error("No rows updated (id=1 missing?)"));
-      // leer nuevo valor
 
       this.db.get("SELECT botones_out FROM out_gui WHERE id = 1", (err2, row) => {
         if (err2) return cb(err2);
-       
         cb(null, Number(row?.botones_out || 0));
       });
     }.bind(this));
   }
 
   // Reset atómico de botones_out a 0
-    resetBotonesOut(cb) {
-       const sql = "UPDATE out_gui SET botones_out = 0 WHERE id = 1";
-        this.db.run(sql, [], function (err) {
-        if (err) {
-            console.error("Error resetBotonesOut UPDATE:", err.message);
-            return cb(err);
-        }
-        if (this.changes === 0) return cb(new Error("No rows updated (id=1 missing?)"));
-        cb(null, 0);
-        }.bind(this));
-    }
+  resetBotonesOut(cb) {
+    const sql = "UPDATE out_gui SET botones_out = 0 WHERE id = 1";
+    this.db.run(sql, [], function (err) {
+      if (err) {
+        console.error("Error resetBotonesOut UPDATE:", err.message);
+        return cb(err);
+      }
+      if (this.changes === 0) return cb(new Error("No rows updated (id=1 missing?)"));
+      cb(null, 0);
+    }.bind(this));
+  }
 }
 
 module.exports = DataBaseOutGui;

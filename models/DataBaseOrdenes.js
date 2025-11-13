@@ -63,38 +63,6 @@ class DataBaseOrdenes {
             }
         });
     }
-
-    // Insertar una nueva orden
-    addOrden(origen, destino) {
-        this.db.run(
-            "INSERT INTO ordenes (origen, destino) VALUES (?, ?)",
-            [origen, destino],
-            function (err) {
-                if (err) console.error("Error al insertar orden:", err.message);
-                else console.log(`✔ Orden añadida con id ${this.lastID}`);
-            }
-        );
-    }
-
-    // Actualizar una orden existente
-    updateOrden(id, nuevoOrigen, nuevoDestino) {
-        this.db.run(
-            "UPDATE ordenes SET origen = ?, destino = ? WHERE id = ?",
-            [nuevoOrigen, nuevoDestino, id],
-            function (err) {
-                if (err) console.error("Error al actualizar orden:", err.message);
-                else console.log(`✔ Orden con id ${id} actualizada (${this.changes} fila)`);
-            }
-        );
-    }
-
-    // Eliminar una orden
-    deleteOrden(id) {
-        this.db.run("DELETE FROM ordenes WHERE id = ?", [id], function (err) {
-            if (err) console.error("Error al eliminar orden:", err.message);
-            else console.log(`✔ Orden con id ${id} eliminada (${this.changes} fila)`);
-        });
-    }
 }
 
 module.exports = DataBaseOrdenes;

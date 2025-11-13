@@ -1,52 +1,27 @@
-// script.js - versión corregida
 
-// Helpers
-function normalizarAgvId(id) {
-  return String(id).trim().toLowerCase();
-}
-
-function toCssPx(val) {
-  if (typeof val === "number") return `${val}px`;
-  if (typeof val === "string") {
-    const s = val.trim();
-    if (s.endsWith("%") || s.endsWith("px")) return s;
-    if (!isNaN(Number(s))) return `${s}px`;
-  }
-  return val;
-}
-
-function aplicarUnidadPosicion(val) {
-  return toCssPx(val);
+function estaConectado(info) {
+  return info.status === 1;
 }
 
 // --- almacenamiento temporal y colocador de AGVs ---
 const _ultimoPuntoAgv = [];
 let mostrandoRuta = false; // estado global
+let valorContador = 0;
 
 function colocarAgvDesdeBackend(info, container) {
-  const contadorInput = document.getElementById("contador-agvs");
-  const maxVisible = parseInt((contadorInput?.value || "0"), 10) || 0;
-
-  const idDom = normalizarAgvId(info.id);
-  // extrae número si está presente
-  const m = idDom.match(/(\d+)/);
-  const index = m ? Number(m[1]) : NaN;
-
-  let el = document.getElementById(idDom);
-
-  // Si no existe y el contador no permite crear, no crear
-  if (!el && maxVisible <= 0) {
-    return; // solo actualizamos elementos existentes cuando contador = 0
+  if (!estaConectado(info)) {
+    const el = document.getElementById(info.id);
+    if (el) el.style.display = "none";
+    return;
   }
 
-  // Si no existe y hay contador > 0, validar índice antes de crear
+  let el = document.getElementById(info.id);
+
   if (!el) {
-    if (!Number.isNaN(index) && index > maxVisible) return; // no crear si excede
-    // crear
     el = document.createElement("img");
-    el.id = idDom;
+    el.id = info.id;
     el.className = "agv";
-    el.src = `/static/images/${idDom}.svg`;
+    el.src = `/static/images/${info.imagen}`;
     el.style.position = "absolute";
     el.style.width = "30px";
     el.style.height = "30px";
@@ -54,29 +29,13 @@ function colocarAgvDesdeBackend(info, container) {
     container.appendChild(el);
   }
 
-  // Aplicar posiciones y rotación (robusto)
-  if (info.x !== undefined && !Number.isNaN(Number(info.x))) {
-    el.style.left = `${Number(info.x)}px`;
-  } else if (typeof info.x === "string" && info.x.trim() !== "") {
-    el.style.left = info.x.trim();
-  }
+  if (info.left) el.style.left = info.left;
+  if (info.top) el.style.top = info.top;
 
-  const containerH = container.clientHeight || container.offsetHeight || 0;
-  if (info.y !== undefined && !Number.isNaN(Number(info.y))) {
-    const yNum = Number(info.y);
-    if (containerH > 0) {
-      el.style.top = `${containerH - yNum}px`;
-      el.style.bottom = "";
-    } else {
-      el.style.bottom = `${yNum}px`;
-      el.style.top = "";
-    }
-  } else if (typeof info.y === "string" && info.y.trim() !== "") {
-    el.style.top = info.y.trim();
-    el.style.bottom = "";
-  }
+  // Normalizar ángulo: 0 = derecha, 90 = arriba, 180 = izquierda, 270 = abajo
+  const rawAngle = Number(info.angulo) || 0;
+  const angleDeg = (360 - rawAngle) % 360;
 
-  const angleDeg = !Number.isNaN(Number(info.angle)) ? Number(info.angle) : 0;
   el.style.transform = `translate(-50%, 50%) rotate(${angleDeg}deg)`;
   el.style.display = "";
 }
@@ -89,9 +48,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const socket = (typeof io === "function") ? io() : null;
   const botonesContainer = document.getElementById("botones-acciones");
 
-  // crear botones dinámicos si existe el contenedor
+  // crear botones dinámicos 
   if (botonesContainer) {
     const NUM_BOTONES = 8;
+
     for (let i = 0; i < NUM_BOTONES; i++) {
       const btn = document.createElement("button");
       btn.className = "btn btn-primary m-1";
@@ -127,70 +87,78 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // contador inicial (si falta el input, trabajamos con 0 localmente)
-  let valorContador = contadorInput ? (parseInt(contadorInput.value.trim()) || 0) : 0;
+  valorContador = contadorInput ? (parseInt(contadorInput.value.trim()) || 0) : 0;
   if (contadorInput) contadorInput.value = valorContador;
 
- // Handler del botón Ruta -> alterna imagen y clase visual
   if (botonRuta) {
     botonRuta.addEventListener("click", function (ev) {
       ev.stopPropagation();
       mostrandoRuta = !mostrandoRuta;
-      // usar siempre el mismo nodo mapaImg
+
       const mapaImg = document.getElementById("mapa-img");
       if (mapaImg) {
         mapaImg.src = mostrandoRuta ? "/static/images/mapa-ruta.png" : "/static/images/mapa.png";
       }
       const mc = document.querySelector(".map-container");
       if (mc) mc.classList.toggle("ruta-activa", mostrandoRuta);
+
+      if (mostrandoRuta) {
+        const container = document.getElementById("agvs-container");
+
+        _ultimoPuntoAgv.forEach(info => {
+          if (estaConectado(info)) {
+            // solo mostrar si está conectado
+            colocarAgvDesdeBackend(info, container);
+            console.log(`🟢 AGV ${info.id} conectado → mostrado en ruta`);
+          } else {
+            // ocultar si no está conectado
+            const el = document.getElementById(info.id);
+            if (el) {
+              el.style.display = "none";
+              console.warn(`🔴 AGV ${info.id} desconectado → ocultado en ruta`);
+            }
+          }
+        });
+      }
     });
   }
 
 
-  // creación manual de AGV (cuando se pulse +)
-  const NUEVO_AGV_X_PX = 20;
-  const NUEVO_AGV_Y_FROM_BOTTOM_PX = 115;
-
-  function crearAgvEnCoordenadas(index, xPxFromLeft, yPxFromBottom) {
-    const idDom = `agv-${index}`;
-    let el = document.getElementById(idDom);
-
-    if (!el) {
-      el = document.createElement("img");
-      el.id = idDom;
-      el.className = "agv";
-      el.src = `/static/images/${idDom}.svg`;
-      el.style.position = "absolute";
-      el.style.width = "30px";
-      el.style.height = "30px";
-      el.style.transform = "translate(-50%, 50%)";
-      el.style.transformOrigin = "50% 50%";
-      agvsContainer.appendChild(el);
-    }
-
-    const containerH = agvsContainer.clientHeight || agvsContainer.offsetHeight || 0;
-    const topPx = containerH ? (containerH - yPxFromBottom) : null;
-
-    el.style.left = `${xPxFromLeft}px`;
-    if (topPx !== null && !Number.isNaN(topPx)) {
-      el.style.top = `${topPx}px`;
-      el.style.bottom = "";
-    } else {
-      el.style.bottom = `${yPxFromBottom}px`;
-      el.style.top = "";
-    }
-    // actualizar el contador input si existe 
-    if (contadorInput && `${contadorInput.value}` !== `${valorContador}`) contadorInput.value = valorContador;
-  }
-
   // Botón +
   if (botonMas) {
     botonMas.addEventListener("click", function () {
-      if (valorContador < 10) { 
-        valorContador ++;
-        if (contadorInput) contadorInput.value = valorContador;
-        // crear AGV inmediatamente
-        crearAgvEnCoordenadas(valorContador, NUEVO_AGV_X_PX, NUEVO_AGV_Y_FROM_BOTTOM_PX);
+      if (_ultimoPuntoAgv.length === 0) {
+        console.warn("ultimoPuntoAgv está vacío. Los AGVs aún no se han cargado desde el backend.");
+        return;
       }
+
+      let targetIndex = valorContador + 1;
+      let agvInfo = null;
+
+      while (targetIndex <= _ultimoPuntoAgv.length) {
+        // buscar directamente por id
+        agvInfo = _ultimoPuntoAgv.find(info => info.id === `agv-${targetIndex}`);
+
+        if (agvInfo) {
+          console.log("AGV encontrado:", agvInfo);
+
+          if (estaConectado(agvInfo)) {
+            valorContador = targetIndex;
+            if (contadorInput) contadorInput.value = valorContador;
+            console.log(`🟢 AGV ${agvInfo.id} está conectado. Mostrando en el mapa. Nuevo contador: ${valorContador}`);
+            colocarAgvDesdeBackend(agvInfo, agvsContainer);
+            return; // ya mostramos uno conectado
+          } else {
+            console.warn(`🔴 AGV ${agvInfo.id} no está conectado (status=${agvInfo.status}). Saltando al siguiente...`);
+          }
+        } else {
+          console.warn(`No se encontró AGV con id agv-${targetIndex} en _ultimoPuntoAgv.`);
+        }
+
+        targetIndex++; // avanzar al siguiente
+      }
+
+      console.warn("⛔ No hay más AGVs conectados disponibles.");
     });
   }
 
@@ -198,15 +166,59 @@ document.addEventListener("DOMContentLoaded", function () {
   if (botonMenos) {
     botonMenos.addEventListener("click", function () {
       if (valorContador > 0) {
-        const ultimoAgv = document.getElementById(`agv-${valorContador}`);
+        const idDom = `agv-${valorContador}`;
+        const ultimoAgv = document.getElementById(idDom);
+
         if (ultimoAgv && agvsContainer.contains(ultimoAgv)) {
           agvsContainer.removeChild(ultimoAgv);
+          console.log(`AGV ${idDom} eliminado del mapa.`);
+        } else {
+          console.warn(`⚠️ No se encontró el elemento DOM con id ${idDom} para eliminar.`);
         }
+
+        // Reducir contador
         valorContador--;
         if (contadorInput) contadorInput.value = valorContador;
+        console.log("📉 Nuevo valor del contador tras eliminar:", valorContador);
+
+        // Refrescar AGVs para ocultar los que queden fuera del rango
+        actualizarAgvs("/api/punto_agv");
+      } else {
+        console.warn("⚠️ No hay AGVs para eliminar. El contador ya está en 0.");
       }
     });
   }
+
+  // Número de entradas y salidas configurables
+  const NUM_INPUTS = 4; 
+  const NUM_OUTPUTS = 4; 
+
+  // Generar dinámicamente los LEDs de entradas y salidas
+  const entradasContainer = document.getElementById("entradas-container");
+  const salidasContainer = document.getElementById("salidas-container");
+
+  if (entradasContainer) {
+    entradasContainer.innerHTML = "";
+    for (let i = 0; i < NUM_INPUTS; i++) {
+      const div = document.createElement("div");
+      div.className = "led-item";
+      div.innerHTML = `<span>IN${i}</span>
+        <img class="entrada-bit" data-entrada="${i}" src="/static/images/punto-rojo.png" alt="IN${i}">`;
+      entradasContainer.appendChild(div);
+    }
+  }
+
+  if (salidasContainer) {
+    salidasContainer.innerHTML = "";
+    for (let i = 0; i < NUM_OUTPUTS; i++) {
+      const div = document.createElement("div");
+      div.className = "led-item";
+      div.innerHTML = `<span>OUT${i}</span>
+        <img class="salida-bit" data-salida="${i}" src="/static/images/punto-rojo.png" alt="OUT${i}">`;
+      salidasContainer.appendChild(div);
+    }
+  }
+
 
   // Inicializaciones: reposición y primeras llamadas
   inicializarReposicionMapa();
@@ -218,62 +230,45 @@ document.addEventListener("DOMContentLoaded", function () {
   checkCom();
 
   // Intervalos
-  setInterval(actualizarOrdenes, 5000);
-  setInterval(() => actualizarAgvs("/api/punto_agv"), 5000);
-  setInterval(() => actualizarSemaforos("/api/punto_semaforo"), 5000);
-  setInterval(actualizarComunicaciones, 3000);
-  setInterval(actualizarMensaje, 3000);
-  setInterval(checkCom, 2000);
+  setInterval(actualizarOrdenes, 1000);
+  setInterval(() => actualizarAgvs("/api/punto_agv"), 1000);
+  setInterval(() => actualizarSemaforos("/api/punto_semaforo"), 1000);
+  setInterval(actualizarComunicaciones, 1000);
+  setInterval(actualizarMensaje, 1000);
+  setInterval(checkCom, 1000);
 });
 
 /* --------------------
    actualizarAgvs
    -------------------- */
 function actualizarAgvs(url) {
-  const container = document.getElementById("agvs-container");
-  if (!container) return;
-
-  const contadorInput = document.getElementById("contador-agvs");
-  const maxVisible = parseInt((contadorInput?.value || "0"), 10) || 0;
-
   fetch(url)
     .then(res => res.json())
     .then(data => {
       if (!Array.isArray(data)) return;
+      maxAgvsBD = data.length;
       _ultimoPuntoAgv.length = 0;
       Array.prototype.push.apply(_ultimoPuntoAgv, data);
 
-      data.forEach(info => {
-        const idDomRaw = String(info.id || "");
-        const idDom = normalizarAgvId(idDomRaw);
-        const m = idDom.match(/(\d+)/);
+      // Mostrar solo los AGVs dentro del rango del contador
+      const container = document.getElementById("agvs-container");
+      if (!container) return;
+
+      _ultimoPuntoAgv.forEach(info => {
+        const m = String(info.id).match(/(\d+)/);
         const index = m ? Number(m[1]) : NaN;
 
-        const existing = document.getElementById(idDom);
-
-        // Si contador = 0, solo actualizar existentes (no creamos nuevos)
-        if (maxVisible <= 0) {
-          if (existing) {
-            colocarAgvDesdeBackend(info, container);
-            existing.style.display = "";
-          }
-          return;
+        if (index <= valorContador && estaConectado(info)) {
+          colocarAgvDesdeBackend(info, container);
+        } else {
+          const el = document.getElementById(info.id);
+          if (el) el.style.display = "none";
         }
-
-        // Si hay contador >0, impide crear si el índice excede maxVisible
-        if (!Number.isNaN(index) && index > maxVisible) {
-          if (existing) existing.style.display = "none";
-          return;
-        }
-
-        // crear/reposicionar y asegurar visibilidad
-        colocarAgvDesdeBackend(info, container);
-        const el = document.getElementById(idDom);
-        if (el) el.style.display = "";
       });
     })
     .catch(err => console.error("Error al actualizar AGVs:", err));
 }
+
 
 // --- Actualizar semáforos ---
 function actualizarSemaforos(url) {
@@ -328,13 +323,19 @@ function inicializarReposicionMapa() {
 
   function reprocesar() {
     if (_ultimoPuntoAgv.length === 0) return;
-    const contadorInput = document.getElementById("contador-agvs");
-    const maxVisible = parseInt((contadorInput?.value || "0"), 10) || 0;
+
     _ultimoPuntoAgv.forEach(info => {
-      colocarAgvDesdeBackend(info, container);
+      const m = String(info.id).match(/(\d+)/);
+      const index = m ? Number(m[1]) : NaN;
+
+      if (index <= valorContador && estaConectado(info)) {
+        colocarAgvDesdeBackend(info, container);
+      } else {
+        const el = document.getElementById(info.id);
+        if (el) el.style.display = "none";
+      }
     });
   }
-
 
   if (mapaImg.complete) reprocesar();
   mapaImg.addEventListener("load", reprocesar);
@@ -347,9 +348,13 @@ function actualizarComunicaciones() {
     .then(data => {
       const plc = document.getElementById("plc-status");
       if (plc) {
-        plc.src = data.plc === 1
-          ? "/static/images/punto-verde.png"
-          : "/static/images/punto-rojo.png";
+        if (data.plc === 1) {
+          plc.src = "/static/images/punto-verde.png";
+        } else if (data.plc === 0) {
+          plc.src = "/static/images/punto-rojo.png";
+        } else {
+          plc.src = "/static/images/punto-gris.png";
+        }
       }
 
       const container = document.getElementById("estado-agvs");
@@ -361,10 +366,15 @@ function actualizarComunicaciones() {
           etiqueta.textContent = `${agv.id}:`;
 
           const imagen = document.createElement("img");
-          imagen.className = "entrada-bit";
-          imagen.src = agv.status === 1
-            ? "/static/images/punto-verde.png"
-            : "/static/images/punto-rojo.png";
+          imagen.className = "estado-agv"; // clase separada para AGV
+
+          if (agv.status === 1) {
+            imagen.src = "/static/images/punto-verde.png";
+          } else if (agv.status === 0) {
+            imagen.src = "/static/images/punto-rojo.png";
+          } else {
+            imagen.src = "/static/images/punto-gris.png";
+          }
 
           container.appendChild(etiqueta);
           container.appendChild(imagen);
@@ -407,23 +417,20 @@ function checkCom() {
       const com = data.COM;
 
       if (com === 1) {
+        // PLC activo → actualizar entradas y salidas normalmente
         actualizarEntradas();
         actualizarSalidas();
       } else {
-        fetch("/api/inputs")
-          .then(res => res.json())
-          .then(bits => {
-            bits.forEach((bit, index) => {
-              const img = document.querySelector(`.entrada-bit[data-entrada="${index}"]`);
-              if (img) img.src = "/static/images/punto-gris.png";
-            });
-          })
-          .catch(err => console.error("Error al forzar las entradas:", err));
+        // PLC apagado → solo poner entradas y salidas en gris
+        document.querySelectorAll(".entrada-bit").forEach(img => {
+          img.src = "/static/images/punto-gris.png";
+        });
 
         document.querySelectorAll(".salida-bit").forEach(img => {
           img.src = "/static/images/punto-gris.png";
         });
 
+        // Estado del PLC en rojo
         const plc = document.getElementById("plc-status");
         if (plc) plc.src = "/static/images/punto-rojo.png";
       }
@@ -462,7 +469,6 @@ function actualizarSalidas() {
     })
     .catch(err => console.error("Error al actualizar salidas:", err));
 }
-
 
 function actualizarMensaje() {
   fetch("/api/mensaje", { cache: "no-store" })

@@ -47,7 +47,7 @@ module.exports = (io) => {
           // Aplicar OR atómico (encender el bit x sin duplicados)
           const mask = 1 << x; // si los índices son 1-based usa (1 << (x - 1))
 
-          outDb.atomicOrBotonesOut(mask, x, (errOr, nuevoValor) => {
+          outDb.atomicOrBotonesOut(mask, (errOr, nuevoValor) => {
             if (errOr) {
               console.error("❌ Error al actualizar Botones_out:", errOr.message);
               socket.emit("botones_out_error", { error: errOr.message });

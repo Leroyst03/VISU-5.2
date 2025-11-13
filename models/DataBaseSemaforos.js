@@ -72,47 +72,6 @@ class DataBaseSemaforos {
             }
         });
     }
-
-    // Obtener un semáforo por ID
-    getSemaforoById(id, callback) {
-        this.db.get("SELECT * FROM semaforos WHERE id = ?", [id], (err, row) => {
-            if (err) {
-                console.error("Error al obtener semáforo:", err.message);
-                callback(null);
-            } else {
-                callback(row);
-            }
-        });
-    }
-
-    // Insertar un nuevo semáforo
-    addSemaforo(x, y, callback) {
-        this.db.run(
-            "INSERT INTO semaforos (X, Y) VALUES (?, ?)",
-            [x, y],
-            function (err) {
-                if (err) {
-                    console.error("Error al insertar semáforo:", err.message);
-                    callback(null);
-                } else {
-                    console.log("✔ Semáforo insertado con id", this.lastID);
-                    callback(this.lastID);
-                }
-            }
-        );
-    }
-
-    // Actualizar un semáforo existente
-    updateSemaforo(id, nuevoX, nuevoY) {
-        this.db.run(
-            "UPDATE semaforos SET X = ?, Y = ? WHERE id = ?",
-            [nuevoX, nuevoY, id],
-            function (err) {
-                if (err) console.error("Error al actualizar semáforo:", err.message);
-                else console.log(`✔ Semáforo ${id} actualizado (${this.changes} fila)`);
-            }
-        );
-    }
 }
 
 module.exports = DataBaseSemaforos;

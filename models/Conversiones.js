@@ -22,7 +22,7 @@ class Conversiones {
         // Devolver coordenadas en formato CSS
         return { left: `${left_pct.toFixed(2)}%`, top: `${top_pct.toFixed(2)}%` };
     }
-    numeroParaBits(valor, numBits = 8) {
+    numeroParaBits(valor, numBits) {
         const bits = [];
         for (let i = 0; i < numBits; i++) {
             bits.push((valor >> i) & 1); // extrae el i-ésimo bit
@@ -39,22 +39,37 @@ class Conversiones {
     obtenerBitsSalida(entryRow, llave = "Outputs", numBits = 4) {
         return this.numeroParaBits(entryRow[llave] || 0, numBits);
     }
-
-    // Procesa los datos de entry_gui para obtener los AGVs en formato CSS
+    // Procesa los datos de entry_gui para obtener los AGVs en formato CSS con estado
     obtenerAgvs(entryRow) {
         const agvsIdx = [];
-        // Buscar todos los AGVs definidos en la fila (X_AGVn, Y_AGVn, A_AGVn)
+        // Buscar todos los AGVs definidos en la fila
         for (let i = 1; i <= 100; i++) {
             if (`X_AGV${i}` in entryRow) agvsIdx.push(i);
         }
-        // Extraer coordenadas y ángulos
+
         const x = agvsIdx.map((i) => entryRow[`X_AGV${i}`]);
         const y = agvsIdx.map((i) => entryRow[`Y_AGV${i}`]);
         const a = agvsIdx.map((i) => entryRow[`A_AGV${i}`]);
+        const s = agvsIdx.map((i) => entryRow[`COM_AGV${i}`]); // ← estados
 
-        // Devolver elementos en formato CSS
-        return this.obtenerElementos("agv", x, y, a, agvsIdx.length);
+        return this.obtenerElementosAgv(x, y, a, s, agvsIdx.length);
     }
+
+    // Construye elementos AGV con conversión a CSS y estado
+    obtenerElementosAgv(x, y, angulo, status, numElementos) {
+        return Array.from({ length: numElementos }, (_, i) => {
+            const coords = this.metrosACssPorcentaje(x[i], y[i]);
+            return {
+                id: `agv-${i + 1}`,
+                left: coords.left,
+                top: coords.top,
+                imagen: `agv-${i + 1}.svg`,
+                angulo: angulo[i],
+                status: status[i] // 1 conectado, 0 desconectado
+            };
+        });
+    }
+
 
     // Procesa los datos de semáforos y los combina con el estado de bits
     obtenerSemaforos(entryRow, semaforosRows) {

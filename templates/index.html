@@ -14,16 +14,13 @@
   <!-- Fuente -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 
-  <!-- Scroll suave por CSS -->
   <style>
     html { scroll-behavior: smooth; }
   </style>
 </head>
 <body>
-  <!-- punto de referencia en la parte superior de la página -->
   <div id="top"></div>
 
-  <!-- Menú lateral -->
   <div class="menu-lateral">
     <a id="menuInicio" href="#top">
       <img src="/static/images/home_icon.png" alt="Inicio" />
@@ -31,12 +28,9 @@
     </a>
   </div>
 
-  <!-- Contenedor principal -->
   <div class="container">
-
-    <!-- Fila superior: mapa + órdenes -->
+    <!-- Mapa y órdenes -->
     <div class="section-row">
-      <!-- Mapa -->
       <div class="mapa-agv section">
         <h2 class="titulo-mapa">Mapa de AGVs</h2>
         <div class="map-container">
@@ -47,7 +41,6 @@
         </div>
       </div>
 
-      <!-- Lista de órdenes -->
       <div class="lista-ordenes section">
         <h2 class="titulo-ordenes">Órdenes</h2>
         <div class="tabla-contenedor">
@@ -67,7 +60,7 @@
       </div>
     </div>
 
-    <!-- Fila media: contador + botones -->
+    <!-- Contador y botones -->
     <div id="container-botones">
       <h2 id="titulo-acciones">Acciones</h2>
       <div class="section-acciones">
@@ -88,42 +81,25 @@
       </div>
     </div>
 
-    <!-- Fila de estado: comunicaciones + entradas + salidas -->
+    <!-- Estado: comunicaciones + entradas + salidas -->
     <div class="com-entradas-salidas">
-      <!-- Comunicaciones -->
       <div class="comunicaciones section">
         <h3>Comunicaciones</h3>
         <p><span>PLC:</span> <img class="entrada-bit" id="plc-status" src="/static/images/punto-rojo.png" alt="PLC"></p>
         <div id="estado-agvs"></div>
       </div>
 
-      <!-- Entradas -->
       <div class="entradas section">
         <h3>Entradas</h3>
-        <div class="led-grid">
-          <div class="led-item"><span>IN0</span><img class="entrada-bit" data-entrada="0" src="/static/images/punto-rojo.png" alt="IN0"></div>
-          <div class="led-item"><span>IN1</span><img class="entrada-bit" data-entrada="1" src="/static/images/punto-rojo.png" alt="IN1"></div>
-          <div class="led-item"><span>IN2</span><img class="entrada-bit" data-entrada="2" src="/static/images/punto-rojo.png" alt="IN2"></div>
-          <div class="led-item"><span>IN3</span><img class="entrada-bit" data-entrada="3" src="/static/images/punto-rojo.png" alt="IN3"></div>
-          <div class="led-item"><span>IN4</span><img class="entrada-bit" data-entrada="4" src="/static/images/punto-rojo.png" alt="IN4"></div>
-          <div class="led-item"><span>IN5</span><img class="entrada-bit" data-entrada="5" src="/static/images/punto-rojo.png" alt="IN5"></div>
-          <div class="led-item"><span>IN6</span><img class="entrada-bit" data-entrada="6" src="/static/images/punto-rojo.png" alt="IN6"></div>
-          <div class="led-item"><span>IN7</span><img class="entrada-bit" data-entrada="7" src="/static/images/punto-rojo.png" alt="IN7"></div>
+        <div class="led-grid" id="entradas-container">
+          <!-- Se rellena dinámicamente -->
         </div>
       </div>
 
-      <!-- Salidas -->
       <div class="salidas section">
         <h3>Salidas</h3>
-        <div class="led-grid">
-          <div class="led-item"><span>OUT0</span><img class="salida-bit" data-salida="0" src="/static/images/punto-rojo.png" alt="OUT0"></div>
-          <div class="led-item"><span>OUT1</span><img class="salida-bit" data-salida="1" src="/static/images/punto-rojo.png" alt="OUT1"></div>
-          <div class="led-item"><span>OUT2</span><img class="salida-bit" data-salida="2" src="/static/images/punto-rojo.png" alt="OUT2"></div>
-          <div class="led-item"><span>OUT3</span><img class="salida-bit" data-salida="3" src="/static/images/punto-rojo.png" alt="OUT3"></div>
-          <div class="led-item"><span>OUT4</span><img class="salida-bit" data-salida="4" src="/static/images/punto-rojo.png" alt="OUT4"></div>
-          <div class="led-item"><span>OUT5</span><img class="salida-bit" data-salida="5" src="/static/images/punto-rojo.png" alt="OUT5"></div>
-          <div class="led-item"><span>OUT6</span><img class="salida-bit" data-salida="6" src="/static/images/punto-rojo.png" alt="OUT6"></div>
-          <div class="led-item"><span>OUT7</span><img class="salida-bit" data-salida="7" src="/static/images/punto-rojo.png" alt="OUT7"></div>
+        <div class="led-grid" id="salidas-container">
+          <!-- Se rellena dinámicamente -->
         </div>
       </div>
     </div>
@@ -141,18 +117,15 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Socket.io -->
   <script src="/socket.io/socket.io.js"></script>
-
-  <!-- Tu script principal -->
+  <!-- Script principal -->
   <script src="/scripts/script.js"></script>
 
-  <!-- Listener extra para evitar que el href añada /#top al historial y para forzar scroll suave (por seguridad) -->
   <script>
     document.addEventListener("DOMContentLoaded", function () {
       const botonMenuInicio = document.getElementById("menuInicio");
       if (botonMenuInicio) {
         botonMenuInicio.addEventListener("click", function (ev) {
-          ev.preventDefault(); // evita añadir /#top a la URL
-          // desplazar al inicio de la página (comportamiento suave ya definido via CSS)
+          ev.preventDefault();
           window.scrollTo({ top: 0, behavior: "smooth" });
         });
       }
