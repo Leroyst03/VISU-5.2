@@ -98,9 +98,9 @@ Refer to the codebase or documentation for a comprehensive list of configuration
 │   ├── agvController.js       # Handles AGV related requests.
 │   ├── botonesController.js   # Handles button related requests and websocket events.
 │   ├── comunicacionesController.js # Handles communication status requests.
-│   ├── ioController.js         # (Purpose unclear from provided snippets)
+│   ├── ioController.js         # Serve the inputs and outputs leds
 │   ├── ioSocketController.js    # (Purpose unclear from provided snippets)
-│   ├── mensajeController.js    # (Purpose unclear from provided snippets)
+│   ├── mensajeController.js    # Serve the message from the data base
 │   ├── ordenesController.js    # Handles order related requests.
 │   └── semaforoController.js  # Handles semaphore related requests.
 ├── models/             # Defines data models and database interactions.
