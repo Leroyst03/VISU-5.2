@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository contains the codebase for VISU-5.2, a JavaScript-based application likely related to visualization and control systems. It utilizes Node.js for its backend and interacts with a database. The application appears to manage AGVs (Automated Guided Vehicles), semaphores, orders, and communications, potentially within an industrial automation setting.
+This repository contains the codebase for VISU-5.2, a JavaScript-based application likely related to visualization and control systems. It utilizes Node.js for its backend and interacts with a database. The application manage AGVs (Automated Guided Vehicles), semaphores, orders, and communications, potentially within an industrial automation setting.
 
 ## Key Features & Benefits
 
