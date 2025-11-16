@@ -93,7 +93,11 @@ Refer to the codebase or documentation for a comprehensive list of configuration
 
 ```
 ├── README.md           # This file.
-├── app.js              # Main application entry point.
+├── app.js              # Main Express Server (backend, APIs, sockets, DB).
+├── main.js             # Electron's main process (creates the window and launches the backend).
+├── launch-visu.sh      # Launcher for the GUI
+├── assets/
+│    ├── icon.png       # Icon for the GUI
 ├── controllers/        # Contains route handlers and business logic.
 │   ├── agvController.js       # Handles AGV related requests.
 │   ├── botonesController.js   # Handles button related requests and websocket events.
