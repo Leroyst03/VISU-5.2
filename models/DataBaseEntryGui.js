@@ -57,7 +57,7 @@ class EntryDatabase {
 
             cols.push("Inputs", "Outputs", "Mensajes", "Botones_in", "Semaforo");
             placeholders.push("?", "?", "?", "?", "?");
-            values.push(1, 3, "Prueba", 1, 1);
+            values.push(1, 3, "Prueba", 0, 1);
 
             const sql = `INSERT INTO entry_gui (${cols.join(", ")}) VALUES (${placeholders.join(", ")});`;
 

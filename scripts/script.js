@@ -1,4 +1,3 @@
-
 function estaConectado(info) {
   return info.status === 1;
 }
@@ -190,8 +189,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Número de entradas y salidas configurables
-  const NUM_INPUTS = 4; 
-  const NUM_OUTPUTS = 4; 
+  const NUM_INPUTS = 8; 
+  const NUM_OUTPUTS = 8; 
 
   // Generar dinámicamente los LEDs de entradas y salidas
   const entradasContainer = document.getElementById("entradas-container");

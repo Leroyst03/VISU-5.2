@@ -4,8 +4,8 @@ require('dotenv').config();
 
 const entryDb = new EntryDatabase();
 const conversiones = new Conversiones();
-const numInputs = process.env.INPUTS || 8;
-const numOutputs = process.env.OUTPUTS || 8;
+const numInputs = parseInt(process.env.INPUTS) || 8;
+const numOutputs = parseInt(process.env.OUTPUTS) || 8;
 
 exports.getInputs = (req, res) => {
   entryDb.db.get("SELECT * FROM entry_gui WHERE id = 1", (err, row) => {

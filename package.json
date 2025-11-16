@@ -1,13 +1,18 @@
 {
   "name": "visu-5.2",
   "version": "1.0.0",
-  "description": "",
+  "description": "Aplicación AGV con Electron",
   "license": "ISC",
-  "author": "leroyst",
+  "author": {
+    "name": "leroyst",
+    "email": "leroyst03@gmail.com"
+  },
   "type": "commonjs",
-  "main": "app.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "npx electron .",
+    "server": "node app.js",
+    "build": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -16,5 +21,23 @@
     "path": "^0.12.7",
     "socket.io": "^4.8.1",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.leroyst.visu",
+    "productName": "Visu 5.2",
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "assets/icon.png",
+      "maintainer": "leroyst <leroyst03@gmail.com>",
+      "executableName": "visu-5.2"
+    }
   }
 }
