@@ -7,6 +7,7 @@ const ordenesController = require("../controllers/ordenesController");
 const ioController = require("../controllers/ioController");
 const mensajeController = require("../controllers/mensajeController");
 const comunicacionesController = require("../controllers/comunicacionesController");
+const enviromentController = require("../controllers/EnviromentController");
 
 // Endpoints REST que usa el frontend
 router.get("/punto_agv", agvController.getAgvs);
@@ -21,5 +22,8 @@ router.get("/outputs", ioController.getOutputs);
 router.get("/mensaje", mensajeController.getMensaje);
 router.get("/com", comunicacionesController.getCom);
 router.get("/estado_comunicaciones", comunicacionesController.getEstadoComunicaciones);
+
+// Variables globales para el front
+router.get("/variables", enviromentController.getVariables);
 
 module.exports = router;

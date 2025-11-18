@@ -1,23 +1,40 @@
+require('dotenv').config();
+const { imageSize } = require("image-size");
+const fs = require("fs");
+const path = require("path");
+
 class Conversiones {
-    constructor(escala = 0.05, anchoPx = 979, altoPx = 599) {
-        // Escala de conversión: 1 píxel = 0.05 metros (por defecto)
+    constructor() {
+        // Ruta absoluta al archivo en disco
+        const rutaImagen = path.resolve(__dirname, "../static/images/mapa.png");
+
+        // Leer el archivo como Buffer
+        const buffer = fs.readFileSync(rutaImagen);
+
+        // Pasar el buffer a image-size
+        const dimensiones = imageSize(buffer);
+        const anchoPx = dimensiones.width;
+        const altoPx = dimensiones.height;
+        const escala = Number(process.env.ESCALA) || 0;
+
         this.ESCALA_METROS_POR_PIXEL = escala;
-        // Ancho del mapa en metros (imagen de 979 px * escala)
         this.ANCHO_MAPA_M = anchoPx * escala;
-        // Alto del mapa en metros (imagen de 599 px * escala)
         this.ALTO_MAPA_M = altoPx * escala;
     }
 
     // Convierte coordenadas (x, y) en metros a porcentajes CSS (left, top)
     metrosACssPorcentaje(x, y) {
+        const offSetX = Number(process.env.OFF_SET_X || 0);
+        const offSetY = Number(process.env.OFF_SET_Y || 0);
+
         // Limitar coordenadas dentro de los bordes del mapa
         x = Math.min(Math.max(x, 0), this.ANCHO_MAPA_M);
         y = Math.min(Math.max(y, 0), this.ALTO_MAPA_M);
 
         // Calcular porcentaje horizontal (left)
-        const left_pct = (x / this.ANCHO_MAPA_M) * 100;
+        const left_pct = ((x + offSetX) / this.ANCHO_MAPA_M) * 100;
         // Calcular porcentaje vertical (top), invirtiendo el eje Y
-        const top_pct = ((this.ALTO_MAPA_M - y) / this.ALTO_MAPA_M) * 100;
+        const top_pct = ((this.ALTO_MAPA_M - (y + offSetY)) / this.ALTO_MAPA_M) * 100;
 
         // Devolver coordenadas en formato CSS
         return { left: `${left_pct.toFixed(2)}%`, top: `${top_pct.toFixed(2)}%` };

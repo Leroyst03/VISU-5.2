@@ -43,6 +43,7 @@ app.get("/", (req, res) => {
 
 // Enganchar controladores de sockets
 require("./controllers/botonesController")(io);   //  para botones_out en tiempo real
+require("./controllers/NumAgvController")(io);      // para actualizar numero_agvs en tiempo real
 
 // Arrancar servidor
 server.listen(port, () => {

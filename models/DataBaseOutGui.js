@@ -96,6 +96,20 @@ class DataBaseOutGui {
     });
   }
 
+  // actualizar numero_agvs
+  updateNumAgvs(num, cb) {
+    const sql = "UPDATE out_gui SET numero_agvs = ? WHERE id = 1";
+    this.db.run(sql, [num], function (err) {
+      if (err) {
+        console.error("Error al actualizar el numero de agvs: ", err.message);
+        return cb(err);
+      }
+      if (this.changes === 0) return cb(new Error("No rows updated (id=1 missing?)"));
+      cb(null, num);
+    });
+  }
+
+
   // Operación atómica: OR bitwise
   atomicOrBotonesOut(mask, cb) {
     const sql = "UPDATE out_gui SET botones_out = COALESCE(botones_out,0) | ? WHERE id = 1";
