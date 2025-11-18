@@ -18,6 +18,10 @@ El archivo .env debe tener todas las variables de entorno que el backend necesit
 *   **AGV:**  La cantidad de AGVS.
 *   **INPUTS:** Cantidad de leds de entrada.
 *   **OUTPUTS:** Cantidad de leds de salida.
+*   **NUM_BOTONES:** Cantidad de botones de la GUI
+*   **OFF_SET_X:** Nivel de separacion del eje X de la imagen original con respecto al deseado
+*   **OFF_SET_Y:** Nivel de separacion del eje Y de la imagen original con respecto al deseado
+*   **ESCALA:** Escala a implementar 
 ## Lanzador con launch-visu.sh
 * Crear el archivo `launch-visu.sh` en la carpeta raiz del proyecto
 ```bash
@@ -38,7 +42,7 @@ npm start
   chmod +x /home/$USER/Escritorio/Abisysa/VISU-5.2/launch-visu.sh
   ```
 ## Acceso directo con .desktop
-* Crear el archivo `visu.desktop` en `~/.local/share/applications/:`
+* Crear el archivo `visu.desktop` en `~/Escritorio`
  ```bash
   [Desktop Entry]
   Name=Visu 5.2
@@ -46,18 +50,16 @@ npm start
   Icon=/home/$USER/Escritorio/Abisysa/VISU-5.2/assets/icon.png
   Type=Application
   Categories=Utility;
-  Terminal=false
+  Terminal=true
 ```
 *  Dar permisos de ejecucion
   ```bash
-  chmod +x ~/.local/share/applications/visu.desktop
+  chmod +x ~/Escritorio/visu.desktop
 ```
-* Actualizar la base de datos de accesos directos
-  ```bash
-  update-desktop-database ~/.local/share/applications/
-  ```
+* Click derecho en icono de escritorio -> Allow launching
+
 ## Resultado
-*  La aplicación se puede abrir desde el menú de Ubuntu con su icono.
+*  La aplicación se puede abrir desde el escritorio de Ubuntu con su icono.
 *  También se puede ejecutar directamente con:
   ```bash
   ./launch-visu.sh
