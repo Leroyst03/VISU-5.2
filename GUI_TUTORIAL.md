@@ -15,7 +15,7 @@ Para facilitar el lanzamiento de la aplicación sin necesidad de empaquetar en `
   
 El archivo .env debe tener todas las variables de entorno que el backend necesita las cuales serian:
 *   **PORT:** El puerto donde se desplegara la aplicacion.
-*   **AGV:**  La cantidad de AGVS.
+*   **AGVS:**  La cantidad de AGVS.
 *   **INPUTS:** Cantidad de leds de entrada.
 *   **OUTPUTS:** Cantidad de leds de salida.
 *   **NUM_BOTONES:** Cantidad de botones de la GUI
