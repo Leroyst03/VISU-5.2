@@ -56,7 +56,8 @@ Before you begin, ensure you have the following installed:
 
 ### API Endpoints
 
-*   `/api/agvs`:  Retrieves AGV data. Example response: `[{"id": 1, "x": 100, "y": 200}, ...]`.
+*   `/api/agvs`:  Retrieves AGV data. Example response: `[{ left: '12.05%', top: '53.26%'}, ...]
+, ...]`.
 *   `/api/com`: Retrieves communication status (1 for active, 0 for inactive). Example response: `{"COM": 1}`.
 *   `/api/estado_comunicaciones`: Retrieves the communication status of PLC and AGVs.
 
