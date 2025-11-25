@@ -21,7 +21,20 @@ El archivo .env debe tener todas las variables de entorno que el backend necesit
 *   **NUM_BOTONES:** Cantidad de botones de la GUI
 *   **OFF_SET_X:** Nivel de separacion del eje X de la imagen original con respecto al deseado
 *   **OFF_SET_Y:** Nivel de separacion del eje Y de la imagen original con respecto al deseado
-*   **ESCALA:** Escala a implementar 
+*   **ESCALA:** Escala a implementar
+
+**Ejemplo:**
+  ```bash
+PORT=3000
+AGVS=10
+INPUTS=8
+OUTPUTS=8
+NUM_BOTONES=8
+OFF_SET_X=0.9
+OFF_SET_Y=4
+ESCALA=0.05
+
+  ```
 ## Lanzador con launch-visu.sh
 * Crear el archivo `launch-visu.sh` en la carpeta raiz del proyecto
 ```bash
