@@ -15,7 +15,7 @@ class Conversiones {
         const dimensiones = imageSize(buffer);
         const anchoPx = dimensiones.width;
         const altoPx = dimensiones.height;
-        const escala = Number(process.env.ESCALA) || 0;
+        const escala = Number(process.env.ESCALA) || 0.05;
 
         this.ESCALA_METROS_POR_PIXEL = escala;
         this.ANCHO_MAPA_M = anchoPx * escala;
@@ -76,6 +76,7 @@ class Conversiones {
     obtenerElementosAgv(x, y, angulo, status, numElementos) {
         return Array.from({ length: numElementos }, (_, i) => {
             const coords = this.metrosACssPorcentaje(x[i], y[i]);
+
             return {
                 id: `agv-${i + 1}`,
                 left: coords.left,

@@ -4,11 +4,12 @@ function estaConectado(info) {
 
 // --- almacenamiento temporal y colocador de AGVs ---
 const _ultimoPuntoAgv = [];
-let mostrandoRuta = false; // estado global
+let mostrandoRuta = false; 
 let valorContador = 0;
 let NUM_BOTONES = 0;
 let NUM_INPUTS = 0; 
 let NUM_OUTPUTS = 0; 
+let socket;
 
 // Al cargar la página, pedir las variables al backend
 fetch("/api/variables")
@@ -99,7 +100,7 @@ function colocarAgvDesdeBackend(info, container) {
    DOMContentLoaded - ÚNICO y centralizado
    -------------------- */
 document.addEventListener("DOMContentLoaded", function () {
-  const socket = (typeof io === "function") ? io() : null;
+  socket = (typeof io === "function") ? io() : null;
   const botonesContainer = document.getElementById("botones-acciones");
 
   // referencias DOM principales
@@ -114,6 +115,17 @@ document.addEventListener("DOMContentLoaded", function () {
     console.error("mapa-img o agvs-container no encontrados");
     return;
   }
+
+  if (socket) {
+    socket.on("botones_out_actualizado", (data) => {
+      console.log("Estado botones_out:", data.botones_out);
+    });
+
+    socket.on("botones_out_error", (err) => {
+      console.error("Error botones:", err.error);
+    });
+  }
+
 
   // contador inicial (si falta el input, trabajamos con 0 localmente)
   valorContador = contadorInput ? (parseInt(contadorInput.value.trim()) || 0) : 0;

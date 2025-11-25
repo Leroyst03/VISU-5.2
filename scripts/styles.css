@@ -256,3 +256,76 @@ body {
 }
 
 html { scroll-behavior: smooth; }
+/* --- Responsivo avanzado --- */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 1024px) {
+  .section-row {
+    flex-direction: column;
+  }
+  .map-container {
+    height: 40vh;   /* ocupa 40% de la altura de pantalla */
+  }
+  .lista-ordenes {
+    margin-top: 15px;
+  }
+  .boton-accion {
+    width: 22vw;    /* botones más flexibles */
+    max-width: 120px;
+  }
+}
+
+/* Móviles grandes (pantallas <= 768px) */
+@media (max-width: 768px) {
+  .menu-lateral {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+
+  .container {
+    margin-left: 0;   /* quitamos espacio lateral */
+    margin-top: 70px; /* espacio para la barra superior */
+  }
+
+  .map-container {
+    height: 35vh;
+  }
+
+  .botones {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .boton-accion {
+    width: 40vw;
+    max-width: 140px;
+    height: 60px;
+  }
+}
+
+/* Móviles pequeños (pantallas <= 480px) */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .map-container {
+    height: 30vh;
+  }
+
+  .boton-accion {
+    width: 80vw;   /* cada botón ocupa casi todo el ancho */
+    height: 50px;
+    font-size: 12px;
+  }
+
+  .led-grid {
+    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+  }
+}

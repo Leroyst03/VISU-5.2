@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 require('dotenv').config();
 
-const numAgvs = parseInt(process.env.AGVS, 10) || 0;
+const numAgvs = Number(process.env.AGVS, 10) || 0;
 
 class EntryDatabase {
     constructor(rutaDb = "./dataBaseEntryGui.db") {
