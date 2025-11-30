@@ -79,6 +79,10 @@ npm start
   ./launch-visu.sh
   ```
 ## Notas
-* Ajusta las rutas `(/home/$USER/Escritorio/Abisysa/VISU-5.2)` según la ubicación real del proyecto en tu sistema.
+* Ajusta las rutas como `(/home/$USER/Escritorio/Abisysa/VISU-5.2)` según la ubicación real del proyecto en tu sistema. Para saberlo abre una terminal en la ubicación del proyecto y ejecuta este comando:
+  ```bash
+    pwd
+  ```
+  Deberías ver una ruta como **/home/usuario/Abisysa/VISU-5.2**, en el archivo **./launch-visu.sh** seguramente deberás ajustar la ruta también.
 * El icono debe ser un archivo PNG válido (ej. 256x256) en la carpeta `assets/`.
 * El .env debe contener todas las variables necesarias para que el backend arranque correctamente.
