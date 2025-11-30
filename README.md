@@ -18,6 +18,7 @@ This repository contains the codebase for VISU-5.2, a JavaScript-based applicati
 Before you begin, ensure you have the following installed:
 
 *   **Node.js:** (version specified in `package.json`, if available)
+*   **sudo apt install npm** (if you don't have install npm)
 *   **npm** or **yarn:** (package manager for Node.js)
 
 ## Installation & Setup Instructions
