@@ -11,8 +11,9 @@ Para facilitar el lanzamiento de la aplicación sin necesidad de empaquetar en `
   ```bash
   git clone https://github.com/<usuario>/<repo>.git
   cd <repo>
+  sudo apt install npm  
   npm install
-  
+
 El archivo .env debe tener todas las variables de entorno que el backend necesita las cuales serian:
 *   **PORT:** El puerto donde se desplegara la aplicacion.
 *   **AGVS:**  La cantidad de AGVS.
