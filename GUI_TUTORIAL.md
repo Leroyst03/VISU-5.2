@@ -9,8 +9,8 @@ Para facilitar el lanzamiento de la aplicación sin necesidad de empaquetar en `
 - **Node.js** y **npm** instalados en el sistema.
 - Clonar este repositorio en tu carpeta de trabajo:
   ```bash
-  git clone https://github.com/<usuario>/<repo>.git
-  cd <repo>
+  git clone https://github.com/Leroyst03/VISU-5.2.git
+  cd <VISU-5.2>
   sudo apt install npm  
   npm install
 
