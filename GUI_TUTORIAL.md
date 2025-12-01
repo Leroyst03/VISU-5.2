@@ -10,7 +10,7 @@ Para facilitar el lanzamiento de la aplicación sin necesidad de empaquetar en `
 - Clonar este repositorio en tu carpeta de trabajo:
   ```bash
   git clone https://github.com/Leroyst03/VISU-5.2.git
-  cd <VISU-5.2>
+  cd VISU-5.2
   sudo apt install npm  
   npm install
 
